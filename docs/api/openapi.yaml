@@ -36,8 +36,6 @@ tags:
     description: Certificate issuance and management
   - name: Verification
     description: Certificate verification endpoints (public)
-  - name: Files
-    description: File upload and PDF generation
   - name: Notifications
     description: Email and SMS notifications
   - name: Admin
@@ -318,6 +316,9 @@ components:
     CertificateUpdateRequest:
       type: object
       properties:
+        certificateNumber:
+          type: string
+          description: Unique certificate number
         grade:
           type: string
           enum: [A+, A, A-, B+, B, B-, C+, C, C-, D+, D, F]
@@ -330,15 +331,20 @@ components:
         specialization:
           type: string
           nullable: true
+      required: [certificateNumber]
+      description: Either grade, cgpa or specialization must be provided
 
     CertificateRevocationRequest:
       type: object
       properties:
+        certificateNumber:
+          type: string
+          description: Unique certificate number
         reason:
           type: string
           minLength: 10
           description: Reason for revoking the certificate
-      required: [reason]
+      required: [reason, certificateNumber]
 
     # ========== Verification Schemas ==========
     VerificationRequest:
@@ -374,7 +380,7 @@ components:
               nullable: true
             verificationMethod:
               type: string
-              enum: [api, manual, code]
+              enum: [certificate id, verification code]
             timestamp:
               type: string
               format: date-time
@@ -422,9 +428,9 @@ components:
                     type: string
                   verificationCode:
                     type: string
-                  valid:
+                  success:
                     type: boolean
-                  reason:
+                  message:
                     type: string
         message:
           type: string
@@ -436,10 +442,6 @@ components:
         certificateId:
           type: string
           format: uuid
-        template:
-          type: string
-          enum: [standard, official, transcript]
-          default: standard
       required: [certificateId]
 
     FileUploadResponse:
@@ -462,25 +464,25 @@ components:
           type: string
 
     # ========== Common Schemas ==========
-    PaginatedResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-        data:
-          type: array
-          items: {}
-        pagination:
-          type: object
-          properties:
-            page:
-              type: integer
-            limit:
-              type: integer
-            total:
-              type: integer
-            totalPages:
-              type: integer
+#    PaginatedResponse:
+#      type: object
+#      properties:
+#        success:
+#          type: boolean
+#        data:
+#          type: array
+#          items: {}
+#        pagination:
+#          type: object
+#          properties:
+#            page:
+#              type: integer
+#            limit:
+#              type: integer
+#            total:
+#              type: integer
+#            totalPages:
+#              type: integer
 
     ErrorResponse:
       type: object
@@ -1325,9 +1327,9 @@ paths:
   # ========================================
   # 📄 FILE SERVICE (Port 3005)
   # ========================================
-  /api/files/certificates/{id}/pdf:
+  /api/certificates/{id}/pdf:
     get:
-      tags: [Files]
+      tags: [Certificates]
       summary: Download certificate PDF
       description: Download the PDF version of a certificate
       security:
@@ -1365,9 +1367,9 @@ paths:
         '404':
           $ref: '#/components/responses/NotFoundError'
 
-  /api/files/certificates/{id}/generate-pdf:
+  /api/certificates/{id}/generate-pdf:
     post:
-      tags: [Files]
+      tags: [Certificates]
       summary: Generate certificate PDF
       description: Generate a PDF for an existing certificate
       security:
@@ -1404,9 +1406,9 @@ paths:
                   message:
                     type: string
 
-  /api/files/upload:
+  /api/certificates/upload:
     post:
-      tags: [Files]
+      tags: [Certificates]
       summary: Upload file
       description: Upload files (documents, images, etc.)
       security:
