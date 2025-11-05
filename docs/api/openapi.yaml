@@ -1,0 +1,1644 @@
+openapi: 3.0.3
+info:
+  title: Student Certificate Verification System
+  version: 1.0.0
+  description: >
+    A microservices-based system for issuing and verifying student certificates using digital signatures and cryptographic verification.  
+    Universities can issue certificates with digital signatures, and employers can verify authenticity through simple ID/code verification.
+    
+    **Key Features:**
+    - Digital signature-based certificate security
+    - Role-based access control (University, Student, Employer, Admin)
+    - Simple verification methods (ID, verification code)
+    - PDF certificate generation and download
+    - Bulk verification capabilities
+    - Complete audit trails
+    
+  contact:
+    name: API Support
+    email: support@student-cert-system.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.student-cert-system.com
+    description: Production Server
+  - url: http://localhost:3000
+    description: Local Development (API Gateway)
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Universities
+    description: University management and verification
+  - name: Certificates
+    description: Certificate issuance and management
+  - name: Verification
+    description: Certificate verification endpoints (public)
+  - name: Files
+    description: File upload and PDF generation
+  - name: Notifications
+    description: Email and SMS notifications
+  - name: Admin
+    description: System administration endpoints
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /api/auth/login
+
+  schemas:
+    # ========== User & Authentication Schemas ==========
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique user identifier
+        email:
+          type: string
+          format: email
+          description: User email address
+        fullName:
+          type: string
+          description: Full name of the user
+        role:
+          type: string
+          enum: [university, student, employer, admin]
+          description: User role in the system
+        universityId:
+          type: string
+          format: uuid
+          description: Associated university ID (for university users)
+          nullable: true
+        studentId:
+          type: string
+          description: Student identification number
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, email, fullName, role]
+
+    AuthRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: User email
+        password:
+          type: string
+          minLength: 6
+          description: User password
+      required: [email, password]
+
+    RegisterRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        fullName:
+          type: string
+          minLength: 2
+        role:
+          type: string
+          enum: [university, student, employer]
+        universityId:
+          type: string
+          format: uuid
+          description: Required for student role
+          nullable: true
+        studentId:
+          type: string
+          description: Required for student role
+          nullable: true
+      required: [email, password, fullName, role]
+
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+            token:
+              type: string
+              description: JWT access token
+            expiresIn:
+              type: string
+              description: Token expiration time
+        message:
+          type: string
+      required: [success, data, message]
+
+    # ========== University Schemas ==========
+    University:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: Official university name
+        email:
+          type: string
+          format: email
+          description: Official university email
+        address:
+          type: string
+          description: University address
+          nullable: true
+        phone:
+          type: string
+          description: Contact phone number
+          nullable: true
+        publicKey:
+          type: string
+          description: RSA public key for signature verification
+        verified:
+          type: boolean
+          description: Whether university is verified by admin
+        verificationCode:
+          type: string
+          description: Verification code for university approval
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, name, email, publicKey, verified]
+
+    UniversityRegisterRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+        email:
+          type: string
+          format: email
+        address:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+      required: [name, email]
+
+    # ========== Certificate Schemas ==========
+    Certificate:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        certificateNumber:
+          type: string
+          description: Unique certificate number
+        studentId:
+          type: string
+          format: uuid
+        universityId:
+          type: string
+          format: uuid
+        studentName:
+          type: string
+          description: Full name of the student
+        courseName:
+          type: string
+          description: Course/degree name
+        specialization:
+          type: string
+          description: Course specialization
+          nullable: true
+        grade:
+          type: string
+          description: Final grade (A+, A, B+, etc.)
+        cgpa:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+          description: Cumulative Grade Point Average
+          nullable: true
+        issueDate:
+          type: string
+          format: date
+          description: Certificate issue date
+        completionDate:
+          type: string
+          format: date
+          description: Course completion date
+          nullable: true
+        certificateHash:
+          type: string
+          description: SHA-256 hash of certificate data
+        digitalSignature:
+          type: string
+          description: Digital signature of the certificate
+        timestampToken:
+          type: string
+          description: RFC 3161 timestamp token
+          nullable: true
+        verificationCode:
+          type: string
+          description: Short alphanumeric verification code
+        pdfPath:
+          type: string
+          description: Path to generated PDF certificate
+          nullable: true
+        status:
+          type: string
+          enum: [active, revoked, suspended]
+          description: Certificate status
+        revocationReason:
+          type: string
+          description: Reason for revocation
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, certificateNumber, studentId, universityId, studentName, courseName, grade, issueDate, certificateHash, digitalSignature, verificationCode, status]
+
+    CertificateIssueRequest:
+      type: object
+      properties:
+        studentName:
+          type: string
+          minLength: 2
+        studentEmail:
+          type: string
+          format: email
+        courseName:
+          type: string
+          minLength: 3
+        specialization:
+          type: string
+          nullable: true
+        grade:
+          type: string
+          enum: [A+, A, A-, B+, B, B-, C+, C, C-, D+, D, F]
+        cgpa:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+          nullable: true
+        issueDate:
+          type: string
+          format: date
+        completionDate:
+          type: string
+          format: date
+          nullable: true
+      required: [studentName, studentEmail, courseName, grade, issueDate]
+
+    CertificateUpdateRequest:
+      type: object
+      properties:
+        grade:
+          type: string
+          enum: [A+, A, A-, B+, B, B-, C+, C, C-, D+, D, F]
+        cgpa:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+          nullable: true
+        specialization:
+          type: string
+          nullable: true
+
+    CertificateRevocationRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 10
+          description: Reason for revoking the certificate
+      required: [reason]
+
+    # ========== Verification Schemas ==========
+    VerificationRequest:
+      type: object
+      properties:
+        certificateId:
+          type: string
+          format: uuid
+          description: Certificate UUID
+          nullable: true
+        verificationCode:
+          type: string
+          description: Short alphanumeric code
+          nullable: true
+      description: Either certificateId or verificationCode must be provided
+
+    VerificationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            valid:
+              type: boolean
+              description: Whether the certificate is valid
+            certificate:
+              $ref: '#/components/schemas/Certificate'
+              nullable: true
+            university:
+              $ref: '#/components/schemas/University'
+              nullable: true
+            verificationMethod:
+              type: string
+              enum: [api, manual, code]
+            timestamp:
+              type: string
+              format: date-time
+        message:
+          type: string
+      required: [success, data, message]
+
+    BulkVerificationRequest:
+      type: object
+      properties:
+        certificates:
+          type: array
+          items:
+            type: object
+            properties:
+              certificateId:
+                type: string
+              verificationCode:
+                type: string
+            description: Either certificateId or verificationCode
+          maxItems: 100
+          description: List of certificates to verify (max 100)
+      required: [certificates]
+
+    BulkVerificationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            totalRequested:
+              type: integer
+            validCertificates:
+              type: integer
+            invalidCertificates:
+              type: integer
+            results:
+              type: array
+              items:
+                type: object
+                properties:
+                  certificateId:
+                    type: string
+                  verificationCode:
+                    type: string
+                  valid:
+                    type: boolean
+                  reason:
+                    type: string
+        message:
+          type: string
+
+    # ========== File & PDF Schemas ==========
+    PDFGenerationRequest:
+      type: object
+      properties:
+        certificateId:
+          type: string
+          format: uuid
+        template:
+          type: string
+          enum: [standard, official, transcript]
+          default: standard
+      required: [certificateId]
+
+    FileUploadResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            filename:
+              type: string
+            path:
+              type: string
+            size:
+              type: integer
+            mimetype:
+              type: string
+        message:
+          type: string
+
+    # ========== Common Schemas ==========
+    PaginatedResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items: {}
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Error code
+            message:
+              type: string
+              description: Human-readable error message
+            details:
+              type: object
+              description: Additional error details
+              nullable: true
+            timestamp:
+              type: string
+              format: date-time
+      required: [success, error]
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          description: Response data
+          nullable: true
+        message:
+          type: string
+          description: Success message
+      required: [success, message]
+
+  responses:
+    UnauthorizedError:
+      description: Access token is missing or invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: "UNAUTHORIZED"
+              message: "Access token is missing or invalid"
+              timestamp: "2024-01-15T10:30:00Z"
+
+    ForbiddenError:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: "FORBIDDEN"
+              message: "Insufficient permissions for this action"
+              timestamp: "2024-01-15T10:30:00Z"
+
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: "NOT_FOUND"
+              message: "Resource not found"
+              timestamp: "2024-01-15T10:30:00Z"
+
+    ValidationError:
+      description: Input validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: "VALIDATION_ERROR"
+              message: "Input validation failed"
+              details:
+                field: "email"
+                message: "Invalid email format"
+              timestamp: "2024-01-15T10:30:00Z"
+
+paths:
+  # ========================================
+  # 🔐 AUTHENTICATION SERVICE (Port 3001)
+  # ========================================
+  /api/auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register a new user
+      description: Register a new user in the system with role-based access
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            examples:
+              university:
+                summary: University user registration
+                value:
+                  email: "admin@university.edu"
+                  password: "securePassword123"
+                  fullName: "University Admin"
+                  role: "university"
+              student:
+                summary: Student user registration
+                value:
+                  email: "john.doe@student.edu"
+                  password: "studentPass123"
+                  fullName: "John Doe"
+                  role: "student"
+                  universityId: "550e8400-e29b-41d4-a716-446655440000"
+                  studentId: "STU2024001"
+              employer:
+                summary: Employer user registration
+                value:
+                  email: "hr@company.com"
+                  password: "employerPass123"
+                  fullName: "HR Manager"
+                  role: "employer"
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/login:
+    post:
+      tags: [Authentication]
+      summary: User login
+      description: Authenticate user and return JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+            example:
+              email: "admin@university.edu"
+              password: "securePassword123"
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/profile:
+    get:
+      tags: [Authentication]
+      summary: Get current user profile
+      description: Retrieve the profile of the currently authenticated user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/User'
+                  message:
+                    type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Refresh access token
+      description: Generate a new access token using refresh token
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                      expiresIn:
+                        type: string
+                  message:
+                    type: string
+
+  /api/auth/logout:
+    post:
+      tags: [Authentication]
+      summary: User logout
+      description: Invalidate the current session
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  # ========================================
+  # 🏛️ UNIVERSITY SERVICE (Port 3002)
+  # ========================================
+  /api/universities:
+    post:
+      tags: [Universities]
+      summary: Register a new university
+      description: Register a university for certificate issuance (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UniversityRegisterRequest'
+      responses:
+        '201':
+          description: University registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/University'
+                  message:
+                    type: string
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+    get:
+      tags: [Universities]
+      summary: List all universities
+      description: Get a list of all registered universities
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            maximum: 100
+          description: Items per page
+        - name: verified
+          in: query
+          schema:
+            type: boolean
+          description: Filter by verification status
+      responses:
+        '200':
+          description: List of universities
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/University'
+
+  /api/universities/{id}:
+    get:
+      tags: [Universities]
+      summary: Get university details
+      description: Retrieve details of a specific university
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: University ID
+      responses:
+        '200':
+          description: University details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/University'
+                  message:
+                    type: string
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    put:
+      tags: [Universities]
+      summary: Update university information
+      description: Update university details (university admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UniversityRegisterRequest'
+      responses:
+        '200':
+          description: University updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/University'
+                  message:
+                    type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/universities/{id}/verify:
+    post:
+      tags: [Universities]
+      summary: Verify a university
+      description: Verify a university for certificate issuance (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: University verified successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /api/universities/{id}/public-key:
+    get:
+      tags: [Universities]
+      summary: Get university public key
+      description: Retrieve the public key for signature verification (public endpoint)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: University public key
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      publicKey:
+                        type: string
+                      universityName:
+                        type: string
+                  message:
+                    type: string
+
+  # ========================================
+  # 📜 CERTIFICATE SERVICE (Port 3003)
+  # ========================================
+  /api/certificates:
+    post:
+      tags: [Certificates]
+      summary: Issue a new certificate
+      description: Issue a new certificate with digital signature (university only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CertificateIssueRequest'
+            example:
+              studentName: "John Doe"
+              studentEmail: "john.doe@student.edu"
+              courseName: "Bachelor of Computer Science"
+              specialization: "Artificial Intelligence"
+              grade: "A"
+              cgpa: 8.5
+              issueDate: "2024-01-15"
+              completionDate: "2024-01-10"
+      responses:
+        '201':
+          description: Certificate issued successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Certificate'
+                  message:
+                    type: string
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+    get:
+      tags: [Certificates]
+      summary: List certificates
+      description: List certificates (filtered by user role)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            maximum: 100
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, revoked, suspended]
+        - name: studentId
+          in: query
+          schema:
+            type: string
+          description: Filter by student ID (university/admin only)
+      responses:
+        '200':
+          description: List of certificates
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Certificate'
+
+  /api/certificates/{id}:
+    get:
+      tags: [Certificates]
+      summary: Get certificate details
+      description: Retrieve details of a specific certificate
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Certificate details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Certificate'
+                  message:
+                    type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    put:
+      tags: [Certificates]
+      summary: Update certificate
+      description: Update certificate details (university only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CertificateUpdateRequest'
+      responses:
+        '200':
+          description: Certificate updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Certificate'
+                  message:
+                    type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /api/certificates/{id}/revoke:
+    post:
+      tags: [Certificates]
+      summary: Revoke a certificate
+      description: Revoke a certificate (university/admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CertificateRevocationRequest'
+      responses:
+        '200':
+          description: Certificate revoked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /api/certificates/batch-issue:
+    post:
+      tags: [Certificates]
+      summary: Batch issue certificates
+      description: Issue multiple certificates at once (university only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                certificates:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CertificateIssueRequest'
+                  maxItems: 50
+      responses:
+        '201':
+          description: Batch issuance completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      totalRequested:
+                        type: integer
+                      successfullyIssued:
+                        type: integer
+                      failed:
+                        type: integer
+                      results:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            success:
+                              type: boolean
+                            certificate:
+                              $ref: '#/components/schemas/Certificate'
+                            error:
+                              type: string
+                  message:
+                    type: string
+
+  # ========================================
+  # ✅ VERIFICATION SERVICE (Port 3004)
+  # ========================================
+  /api/verify:
+    post:
+      tags: [Verification]
+      summary: Verify certificate
+      description: Verify a certificate using ID or verification code (public endpoint)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerificationRequest'
+            examples:
+              byId:
+                summary: Verify by certificate ID
+                value:
+                  certificateId: "550e8400-e29b-41d4-a716-446655440000"
+              byCode:
+                summary: Verify by verification code
+                value:
+                  verificationCode: "ABC12345"
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/verify/{certificateId}:
+    get:
+      tags: [Verification]
+      summary: Verify certificate by ID
+      description: Quick verification using certificate ID (public endpoint)
+      parameters:
+        - name: certificateId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Certificate UUID
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/verify/code/{verificationCode}:
+    get:
+      tags: [Verification]
+      summary: Verify certificate by code
+      description: Quick verification using verification code (public endpoint)
+      parameters:
+        - name: verificationCode
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[A-Z0-9]{6,8}$'
+          description: Alphanumeric verification code
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/verify/bulk:
+    post:
+      tags: [Verification]
+      summary: Bulk certificate verification
+      description: Verify multiple certificates at once (rate limited)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkVerificationRequest'
+      responses:
+        '200':
+          description: Bulk verification results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkVerificationResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/verify/signature:
+    post:
+      tags: [Verification]
+      summary: Verify digital signature
+      description: Verify the digital signature of a certificate (public endpoint)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                certificateHash:
+                  type: string
+                  description: SHA-256 hash of certificate data
+                digitalSignature:
+                  type: string
+                  description: Base64 encoded digital signature
+                universityId:
+                  type: string
+                  format: uuid
+                  description: University ID for public key lookup
+              required: [certificateHash, digitalSignature, universityId]
+      responses:
+        '200':
+          description: Signature verification result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      valid:
+                        type: boolean
+                      universityName:
+                        type: string
+                  message:
+                    type: string
+
+  # ========================================
+  # 📄 FILE SERVICE (Port 3005)
+  # ========================================
+  /api/files/certificates/{id}/pdf:
+    get:
+      tags: [Files]
+      summary: Download certificate PDF
+      description: Download the PDF version of a certificate
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Certificate ID
+        - name: template
+          in: query
+          schema:
+            type: string
+            enum: [standard, official, transcript]
+            default: standard
+          description: PDF template to use
+      responses:
+        '200':
+          description: PDF file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              description: 'attachment; filename="certificate.pdf"'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/files/certificates/{id}/generate-pdf:
+    post:
+      tags: [Files]
+      summary: Generate certificate PDF
+      description: Generate a PDF for an existing certificate
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PDFGenerationRequest'
+      responses:
+        '201':
+          description: PDF generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      pdfPath:
+                        type: string
+                      downloadUrl:
+                        type: string
+                  message:
+                    type: string
+
+  /api/files/upload:
+    post:
+      tags: [Files]
+      summary: Upload file
+      description: Upload files (documents, images, etc.)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: File to upload
+                type:
+                  type: string
+                  enum: [document, image, template]
+                  description: File type
+      responses:
+        '201':
+          description: File uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileUploadResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  # ========================================
+  # 📧 NOTIFICATION SERVICE (Port 3006)
+  # ========================================
+  /api/notifications/certificate-issued:
+    post:
+      tags: [Notifications]
+      summary: Send certificate issued notification
+      description: Send email notification when certificate is issued (internal service call)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                certificateId:
+                  type: string
+                  format: uuid
+                studentEmail:
+                  type: string
+                  format: email
+                studentName:
+                  type: string
+                courseName:
+                  type: string
+                universityName:
+                  type: string
+              required: [certificateId, studentEmail, studentName, courseName, universityName]
+      responses:
+        '200':
+          description: Notification sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /api/notifications/verification-alert:
+    post:
+      tags: [Notifications]
+      summary: Send verification alert
+      description: Send alert when certificate is verified (optional feature)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                certificateId:
+                  type: string
+                  format: uuid
+                verifierInfo:
+                  type: string
+                verificationTime:
+                  type: string
+                  format: date-time
+      responses:
+        '200':
+          description: Alert sent successfully
+
+  # ========================================
+  # 👤 ADMIN ENDPOINTS
+  # ========================================
+  /api/admin/dashboard:
+    get:
+      tags: [Admin]
+      summary: Get admin dashboard data
+      description: Retrieve dashboard statistics and metrics (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      totalCertificates:
+                        type: integer
+                      totalUniversities:
+                        type: integer
+                      totalUsers:
+                        type: integer
+                      verificationsToday:
+                        type: integer
+                      recentVerifications:
+                        type: array
+                        items:
+                          type: object
+                      certificatesByMonth:
+                        type: array
+                        items:
+                          type: object
+                  message:
+                    type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /api/admin/users:
+    get:
+      tags: [Admin]
+      summary: List all users
+      description: Get a list of all users in the system (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [university, student, employer, admin]
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/User'
+
+  # ========================================
+  # 🏥 HEALTH & MONITORING
+  # ========================================
+  /api/health:
+    get:
+      tags: [Admin]
+      summary: Health check
+      description: Check if the API Gateway is healthy
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+                  services:
+                    type: object
+                    properties:
+                      auth:
+                        type: string
+                        enum: [healthy, unhealthy]
+                      university:
+                        type: string
+                        enum: [healthy, unhealthy]
+                      certificate:
+                        type: string
+                        enum: [healthy, unhealthy]
+                      verification:
+                        type: string
+                        enum: [healthy, unhealthy]
+                      file:
+                        type: string
+                        enum: [healthy, unhealthy]
+                      notification:
+                        type: string
+                        enum: [healthy, unhealthy]
+
+  /api/metrics:
+    get:
+      tags: [Admin]
+      summary: System metrics
+      description: Get system metrics in Prometheus format
+      responses:
+        '200':
+          description: Prometheus metrics
+          content:
+            text/plain:
+              schema:
+                type: string

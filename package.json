@@ -1,0 +1,74 @@
+{
+  "name": "certificate-verification-system",
+  "version": "1.0.0",
+  "description": "Student Certificate Verification System - Microservices Architecture",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:gateway\" \"npm run dev:auth\" \"npm run dev:university\" \"npm run dev:certificate\" \"npm run dev:verification\" \"npm run dev:file\" \"npm run dev:notification\"",
+    "dev:gateway": "cd backend/api-gateway && npm run dev",
+    "dev:auth": "cd backend/auth-service && npm run dev",
+    "dev:university": "cd backend/university-service && npm run dev",
+    "dev:certificate": "cd backend/certificate-service && npm run dev",
+    "dev:verification": "cd backend/verification-service && npm run dev",
+    "dev:file": "cd backend/file-service && npm run dev",
+    "dev:notification": "cd backend/notification-service && npm run dev",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "concurrently \"cd backend/api-gateway && npm run build\" \"cd backend/auth-service && npm run build\" \"cd backend/university-service && npm run build\" \"cd backend/certificate-service && npm run build\" \"cd backend/verification-service && npm run build\" \"cd backend/file-service && npm run build\" \"cd backend/notification-service && npm run build\"",
+    "build:frontend": "concurrently \"cd frontend/admin-dashboard && npm run build\" \"cd frontend/student-portal && npm run build\" \"cd frontend/employer-portal && npm run build\"",
+    "test": "npm run test:backend",
+    "test:backend": "concurrently \"cd backend/api-gateway && npm test\" \"cd backend/auth-service && npm test\" \"cd backend/university-service && npm test\" \"cd backend/certificate-service && npm test\" \"cd backend/verification-service && npm test\" \"cd backend/file-service && npm test\" \"cd backend/notification-service && npm test\"",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:build": "docker-compose build",
+    "docker:logs": "docker-compose logs -f",
+    "setup": "npm run setup:backend && npm run setup:frontend",
+    "setup:backend": "concurrently \"cd backend/api-gateway && npm install\" \"cd backend/auth-service && npm install\" \"cd backend/university-service && npm install\" \"cd backend/certificate-service && npm install\" \"cd backend/verification-service && npm install\" \"cd backend/file-service && npm install\" \"cd backend/notification-service && npm install\"",
+    "setup:frontend": "concurrently \"cd frontend/admin-dashboard && npm install\" \"cd frontend/student-portal && npm install\" \"cd frontend/employer-portal && npm install\"",
+    "migrate": "npm run migrate:auth && npm run migrate:university && npm run migrate:certificate",
+    "migrate:auth": "cd backend/auth-service && npm run migrate",
+    "migrate:university": "cd backend/university-service && npm run migrate",
+    "migrate:certificate": "cd backend/certificate-service && npm run migrate",
+    "seed": "npm run seed:auth && npm run seed:university && npm run seed:certificate",
+    "seed:auth": "cd backend/auth-service && npm run seed",
+    "seed:university": "cd backend/university-service && npm run seed",
+    "seed:certificate": "cd backend/certificate-service && npm run seed"
+  },
+  "keywords": [
+    "certificate",
+    "verification",
+    "microservices",
+    "digital-signature",
+    "education",
+    "blockchain-alternative"
+  ],
+  "author": "APIBP-20242YA-Team-5",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.19.24",
+    "concurrently": "^8.2.2",
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.10",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "workspaces": [
+    "backend/*",
+    "frontend/*"
+  ],
+  "directories": {
+    "doc": "docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BITSSAP2025AugAPIBP3Sections/APIBP-20242YA-Team-5.git"
+  },
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/BITSSAP2025AugAPIBP3Sections/APIBP-20242YA-Team-5/issues"
+  },
+  "homepage": "https://github.com/BITSSAP2025AugAPIBP3Sections/APIBP-20242YA-Team-5#readme"
+}

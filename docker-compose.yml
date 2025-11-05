@@ -1,0 +1,197 @@
+# Root Docker Compose for Development
+version: '3.8'
+
+services:
+  # API Gateway
+  api-gateway:
+    build: ./backend/api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - UNIVERSITY_SERVICE_URL=http://university-service:3002
+      - CERTIFICATE_SERVICE_URL=http://certificate-service:3003
+      - VERIFICATION_SERVICE_URL=http://verification-service:3004
+      - FILE_SERVICE_URL=http://file-service:3005
+      - NOTIFICATION_SERVICE_URL=http://notification-service:3006
+    depends_on:
+      - auth-service
+      - university-service
+      - certificate-service
+      - verification-service
+    networks:
+      - cert-network
+
+  # Auth Service
+  auth-service:
+    build: ./backend/auth-service
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:password@postgres-auth:5432/auth_db
+      - JWT_SECRET=your-super-secret-jwt-key
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres-auth
+      - redis
+    networks:
+      - cert-network
+
+  # University Service
+  university-service:
+    build: ./backend/university-service
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:password@postgres-university:5432/university_db
+    depends_on:
+      - postgres-university
+    networks:
+      - cert-network
+
+  # Certificate Service
+  certificate-service:
+    build: ./backend/certificate-service
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:password@postgres-certificate:5432/certificate_db
+      - FILE_SERVICE_URL=http://file-service:3005
+    depends_on:
+      - postgres-certificate
+    networks:
+      - cert-network
+
+  # Verification Service
+  verification-service:
+    build: ./backend/verification-service
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:password@postgres-certificate:5432/certificate_db
+      - UNIVERSITY_SERVICE_URL=http://university-service:3002
+    depends_on:
+      - postgres-certificate
+    networks:
+      - cert-network
+
+  # File Service
+  file-service:
+    build: ./backend/file-service
+    ports:
+      - "3005:3005"
+    environment:
+      - NODE_ENV=development
+      - STORAGE_PATH=/app/uploads
+    volumes:
+      - file-storage:/app/uploads
+    networks:
+      - cert-network
+
+  # Notification Service
+  notification-service:
+    build: ./backend/notification-service
+    ports:
+      - "3006:3006"
+    environment:
+      - NODE_ENV=development
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+    networks:
+      - cert-network
+
+  # Databases
+  postgres-auth:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=auth_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres-auth-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - cert-network
+
+  postgres-university:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=university_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres-university-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - cert-network
+
+  postgres-certificate:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=certificate_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres-certificate-data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+    networks:
+      - cert-network
+
+  # Redis for caching and sessions
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - cert-network
+
+  # Frontend Services (Optional for development)
+  student-portal:
+    build: ./frontend/student-portal
+    ports:
+      - "4002:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:3000
+    networks:
+      - cert-network
+
+  employer-portal:
+    build: ./frontend/employer-portal
+    ports:
+      - "4003:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:3000
+    networks:
+      - cert-network
+
+  admin-dashboard:
+    build: ./frontend/admin-dashboard
+    ports:
+      - "4001:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:3000
+    networks:
+      - cert-network
+
+volumes:
+  postgres-auth-data:
+  postgres-university-data:
+  postgres-certificate-data:
+  redis-data:
+  file-storage:
+
+networks:
+  cert-network:
+    driver: bridge

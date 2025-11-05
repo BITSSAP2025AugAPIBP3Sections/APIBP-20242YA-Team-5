@@ -17,7 +17,7 @@ Acts as the bridge between frontend clients and the certificate verification lay
 - **User authentication & role-based access** (university, student, employer)  
 - **Certificate management** – create, update, and retrieve certificate records  
 - **Digital signature & hash generation** – compute certificate hash (e.g., SHA-256) and cryptographic signatures  
-- **Verification** – validate a certificate by ID, verification code, or QR code  
+- **Verification** – validate a certificate by ID or verification code  
 
 Clients can choose:
 - **REST endpoints** for standard HTTP requests  
@@ -32,7 +32,7 @@ Clients can choose:
 - Store certificate hash and digital signature in secure database  
 
 ### **Student (Holder)**
-- Retrieve issued certificate details and verification QR code  
+- Retrieve issued certificate details and verification information  
 
 ### **Employer (Verifier)**
 - Verify certificate authenticity directly through REST or GraphQL endpoints  
