@@ -51,7 +51,7 @@ Clients can choose:
 - **Saher Mahtab** – 93103 – [@SaherMahtab](https://github.com/SaherMahtab)  
 - **R Soujanya** – 93039 – [@reddeboinasoujanya09](https://github.com/reddeboinasoujanya09)  
 - **Sanka Deekshitha** – 93043 – [@deekshitha-77](https://github.com/deekshitha-77)  
-- **Nantha Krishnan G** – 93049 – [@spotananthu](https://github.com/spotananthu)  
+- **Anantha Krishnan G** – 93049 – [@spotananthu](https://github.com/spotananthu)  
 
 
 
