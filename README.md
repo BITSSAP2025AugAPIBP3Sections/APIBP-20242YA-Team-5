@@ -1,23 +1,23 @@
 # **Student Certificate Verification System**
 
-The application provides APIs for issuing and verifying student certificates on a blockchain network.  
-Universities can publish certificate details immutably, and employers can instantly validate authenticity without contacting the university.
+The application provides APIs for issuing and verifying student certificates using digital signatures and cryptographic verification.  
+Universities can publish certificate details securely, and employers can instantly validate authenticity without contacting the university.
 
 
 
 ## **Backend**
-Handles business logic and communicates with the blockchain network and a relational database.  
+Handles business logic and communicates with the database and cryptographic services.  
 Exposes **REST and GraphQL APIs** for operations such as certificate issuance, record management, and verification.
 
 
 
 ## **REST & GraphQL API**
-Acts as the bridge between frontend clients and the blockchain layer. Supports operations like:
+Acts as the bridge between frontend clients and the certificate verification layer. Supports operations like:
 
 - **User authentication & role-based access** (university, student, employer)  
 - **Certificate management** – create, update, and retrieve certificate records  
-- **Hash generation & storage** – compute certificate hash (e.g., SHA-256) and write to blockchain  
-- **Verification** – validate a certificate by ID, transaction hash, or QR code  
+- **Digital signature & hash generation** – compute certificate hash (e.g., SHA-256) and cryptographic signatures  
+- **Verification** – validate a certificate by ID, verification code, or QR code  
 
 Clients can choose:
 - **REST endpoints** for standard HTTP requests  
@@ -29,10 +29,10 @@ Clients can choose:
 
 ### **University (Issuer)**
 - Authenticate and issue certificates  
-- Store certificate hash and metadata on blockchain  
+- Store certificate hash and digital signature in secure database  
 
 ### **Student (Holder)**
-- Retrieve issued certificate details and blockchain transaction/QR code  
+- Retrieve issued certificate details and verification QR code  
 
 ### **Employer (Verifier)**
 - Verify certificate authenticity directly through REST or GraphQL endpoints  
@@ -41,8 +41,8 @@ Clients can choose:
 
 ## **System-Wide**
 - Authentication and role-based access control  
-- Secure hashing before writing to blockchain  
-- Immutable, tamper-proof verification accessible via both REST and GraphQL APIs  
+- Secure digital signing and cryptographic hashing  
+- Tamper-proof verification accessible via both REST and GraphQL APIs  
 
 
 
