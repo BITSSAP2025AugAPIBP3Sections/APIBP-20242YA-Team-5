@@ -3,7 +3,41 @@
 The application provides APIs for issuing and verifying student certificates using digital signatures and cryptographic verification.  
 Universities can publish certificate details securely, and employers can instantly validate authenticity without contacting the university.
 
+## **Quick Start - API Documentation**
 
+### **To view API Specification**
+
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+2. **Run Swagger UI:**
+   ```bash
+   npm run swagger
+   ```
+
+3. **Access API Documentation:**
+   - Open: **http://localhost:8080**
+   - Or directly: **http://localhost:8080/api-docs**
+
+
+### **Alternative Commands:**
+```bash
+# Same as npm run swagger
+npm run api-docs
+
+# Or run directly
+node swagger-server.js
+```
+
+## **📋 API Specification File**
+The complete OpenAPI 3.0.3 specification is located at:
+- **File**: `docs/api/openapi.yaml`
+- **Format**: YAML (industry standard)
+- **Version**: OpenAPI 3.0.3
+
+---
 
 ## **Backend**
 Handles business logic and communicates with the database and cryptographic services.  
