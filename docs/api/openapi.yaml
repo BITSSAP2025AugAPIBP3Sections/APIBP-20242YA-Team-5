@@ -464,25 +464,25 @@ components:
           type: string
 
     # ========== Common Schemas ==========
-#    PaginatedResponse:
-#      type: object
-#      properties:
-#        success:
-#          type: boolean
-#        data:
-#          type: array
-#          items: {}
-#        pagination:
-#          type: object
-#          properties:
-#            page:
-#              type: integer
-#            limit:
-#              type: integer
-#            total:
-#              type: integer
-#            totalPages:
-#              type: integer
+    PaginatedResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items: {}
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
 
     ErrorResponse:
       type: object
