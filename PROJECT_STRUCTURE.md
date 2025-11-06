@@ -7,11 +7,9 @@ APIBP-20242YA-Team-5/
 ├── backend/                           # Backend Microservices
 │   ├── api-gateway/                   # API Gateway & Load Balancer
 │   ├── auth-service/                  # Authentication & Authorization
-│   ├── certificate-service/          # Certificate Management
+│   ├── certificate-service/          # Certificate Management & File Operations
 │   ├── verification-service/         # Certificate Verification
 │   ├── university-service/           # University Management
-│   ├── notification-service/         # Email/SMS Notifications
-│   ├── file-service/                 # File Upload & PDF Generation
 │   └── shared/                       # Shared Libraries
 │       ├── common/                   # Common utilities
 │       ├── types/                    # TypeScript interfaces
@@ -94,22 +92,9 @@ APIBP-20242YA-Team-5/
   - Verification logging
   - Public verification APIs
 
-### **6. File Service** (`file-service/`)
-- **Purpose**: File handling and PDF generation
-- **Technology**: Node.js + Express + Puppeteer
-- **Port**: 3005
-- **Storage**: Local/MinIO/AWS S3
-- **Responsibilities**:
-  - PDF certificate generation
-  - File upload handling
-  - Certificate template management
+---
 
-### **7. Notification Service** (`notification-service/`)
-- **Purpose**: Email and SMS notifications
-- **Technology**: Node.js + Express + Nodemailer
-- **Port**: 3006
-- **Responsibilities**:
-  - Email notifications
+## 🔧 **Development Guidelines**
   - SMS notifications (optional)
   - Notification templates
   - Delivery tracking
@@ -329,9 +314,9 @@ university-service: 2 replicas
 ## **Team Assignment Suggestions**
 
 ### **Backend Services** (3-4 people)
-- **Sachin TP**: API Gateway + Auth Service
-- **Anantha Krishnan**: Certificate Service + Crypto
-- **Saher Mahtab**: Verification Service + File Service
+- **Utsav Jain**: API Gateway + Auth Service  
+- **Supriya Bhagat**: University Service + Certificate Service (including file operations)
+- **Saher Mahtab**: Verification Service + Integration Testing
 
 ### **Frontend Applications** (2-3 people)
 - **Soujanya R**: Student Portal + PDF Generation
@@ -349,8 +334,7 @@ university-service: 2 replicas
 - Basic database setup
 
 ### **Phase 2: Certificate Management (Week 2-3)**
-- Certificate Service with digital signatures
-- File Service for PDF generation
+- Certificate Service with digital signatures and file operations
 - Basic frontend for testing
 
 ### **Phase 3: Verification & Frontend (Week 3-4)**
@@ -359,7 +343,6 @@ university-service: 2 replicas
 - PDF generation and download
 
 ### **Phase 4: Advanced Features (Week 4-5)**
-- Notification Service
 - Admin dashboard
 - Monitoring setup
 

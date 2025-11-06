@@ -1,6 +1,6 @@
 // Shared TypeScript interfaces and types
 export interface User {
-  id: string;
+  userId: string;
   email: string;
   role: 'university' | 'student' | 'employer' | 'admin';
   universityId?: string;
@@ -11,7 +11,7 @@ export interface User {
 }
 
 export interface University {
-  id: string;
+  universityId: string;
   name: string;
   email: string;
   address?: string;
@@ -24,7 +24,7 @@ export interface University {
 }
 
 export interface Certificate {
-  id: string;
+  certificateId: string;
   certificateNumber: string;
   studentId: string;
   universityId: string;
@@ -51,7 +51,7 @@ export interface VerificationLog {
   certificateId: string;
   verifierIp: string;
   verifierInfo?: string;
-  verificationMethod: 'api' | 'manual' | 'code';
+  verificationMethod: 'certificate id' | 'verification code';
   verificationResult: boolean;
   verifiedAt: Date;
 }
@@ -102,7 +102,7 @@ export interface VerificationRequest {
 }
 
 export interface VerificationResponse {
-  valid: boolean;
+  success: boolean;
   certificate?: Certificate;
   university?: University;
   message: string;

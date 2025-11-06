@@ -42,7 +42,6 @@ app.get('/api/health', (req, res) => {
       university: 'checking...',
       certificate: 'checking...',
       verification: 'checking...',
-      file: 'checking...',
       notification: 'checking...'
     }
   });
@@ -53,9 +52,7 @@ const SERVICES = {
   auth: process.env.AUTH_SERVICE_URL || 'http://localhost:3001',
   university: process.env.UNIVERSITY_SERVICE_URL || 'http://localhost:3002',
   certificate: process.env.CERTIFICATE_SERVICE_URL || 'http://localhost:3003',
-  verification: process.env.VERIFICATION_SERVICE_URL || 'http://localhost:3004',
-  file: process.env.FILE_SERVICE_URL || 'http://localhost:3005',
-  notification: process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3006'
+  verification: process.env.VERIFICATION_SERVICE_URL || 'http://localhost:3004'
 };
 
 // Proxy configuration for each service
@@ -82,8 +79,6 @@ app.use('/api/auth', createProxy(SERVICES.auth, { '^/api/auth': '' }));
 app.use('/api/universities', createProxy(SERVICES.university, { '^/api/universities': '' }));
 app.use('/api/certificates', createProxy(SERVICES.certificate, { '^/api/certificates': '' }));
 app.use('/api/verify', createProxy(SERVICES.verification, { '^/api/verify': '' }));
-app.use('/api/files', createProxy(SERVICES.file, { '^/api/files': '' }));
-app.use('/api/notifications', createProxy(SERVICES.notification, { '^/api/notifications': '' }));
 
 // Admin routes (you can add authentication middleware here later)
 app.use('/api/admin', createProxy(SERVICES.auth, { '^/api/admin': '/admin' }));

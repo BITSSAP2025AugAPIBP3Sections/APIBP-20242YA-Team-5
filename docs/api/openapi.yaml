@@ -36,8 +36,6 @@ tags:
     description: Certificate issuance and management
   - name: Verification
     description: Certificate verification endpoints (public)
-  - name: Notifications
-    description: Email and SMS notifications
   - name: Admin
     description: System administration endpoints
 
@@ -1338,7 +1336,7 @@ paths:
                     type: string
 
   # ========================================
-  # 📄 FILE SERVICE (Port 3005)
+  # 📄 CERTIFICATE FILE OPERATIONS (Integrated)
   # ========================================
   /api/certificates/{id}/pdf:
     get:
@@ -1453,71 +1451,7 @@ paths:
           $ref: '#/components/responses/UnauthorizedError'
 
   # ========================================
-  # 📧 NOTIFICATION SERVICE (Port 3006)
-  # ========================================
-  /api/notifications/certificate-issued:
-    post:
-      tags: [Notifications]
-      summary: Send certificate issued notification
-      description: Send email notification when certificate is issued (internal service call)
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                certificateId:
-                  type: string
-                  format: uuid
-                studentEmail:
-                  type: string
-                  format: email
-                studentName:
-                  type: string
-                courseName:
-                  type: string
-                universityName:
-                  type: string
-              required: [certificateId, studentEmail, studentName, courseName, universityName]
-      responses:
-        '200':
-          description: Notification sent successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SuccessResponse'
-
-  /api/notifications/verification-alert:
-    post:
-      tags: [Notifications]
-      summary: Send verification alert
-      description: Send alert when certificate is verified (optional feature)
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                certificateId:
-                  type: string
-                  format: uuid
-                verifierInfo:
-                  type: string
-                verificationTime:
-                  type: string
-                  format: date-time
-      responses:
-        '200':
-          description: Alert sent successfully
-
-  # ========================================
-  # 👤 ADMIN ENDPOINTS
+  #  ADMIN ENDPOINTS
   # ========================================
   /api/admin/dashboard:
     get:
