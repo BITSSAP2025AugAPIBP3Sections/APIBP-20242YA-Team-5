@@ -111,23 +111,21 @@ docker-compose up -d
 
 ```
 ├── backend/
-│   ├── api-gateway/        ✅ RUNNING
-│   ├── auth-service/       🔄 Next to implement
-│   ├── university-service/ 🔄 To implement
-│   ├── certificate-service/🔄 To implement
-│   ├── verification-service/🔄 To implement
-│   ├── file-service/       🔄 To implement
-│   └── notification-service/🔄 To implement
+│   ├── api-gateway/        RUNNING
+│   ├── auth-service/       IMPLEMENTED
+│   ├── university-service/ IMPLEMENTED
+│   ├── certificate-service/IMPLEMENTED (includes file operations)
+│   └── verification-service/IMPLEMENTED
 ├── frontend/
 │   ├── university-portal/  🔄 To implement
 │   ├── student-portal/     🔄 To implement
 │   └── admin-panel/        🔄 To implement
 ├── docs/
 │   ├── api/
-│   │   ├── openapi.yaml    ✅ Complete API spec
-│   │   └── examples.md     ✅ API examples
-│   └── PROJECT_STRUCTURE.md ✅ Architecture guide
-└── docker-compose.yml      ✅ Full environment setup
+│   │   ├── openapi.yaml    Complete API spec
+│   │   └── examples.md     API examples
+│   └── PROJECT_STRUCTURE.md Architecture guide
+└── docker-compose.yml      Full environment setup
 ```
 
 ## Checking Service Status

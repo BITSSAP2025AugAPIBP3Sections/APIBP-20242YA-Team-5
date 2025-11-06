@@ -13,8 +13,6 @@ services:
       - UNIVERSITY_SERVICE_URL=http://university-service:3002
       - CERTIFICATE_SERVICE_URL=http://certificate-service:3003
       - VERIFICATION_SERVICE_URL=http://verification-service:3004
-      - FILE_SERVICE_URL=http://file-service:3005
-      - NOTIFICATION_SERVICE_URL=http://notification-service:3006
     depends_on:
       - auth-service
       - university-service
@@ -60,7 +58,6 @@ services:
     environment:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://postgres:password@postgres-certificate:5432/certificate_db
-      - FILE_SERVICE_URL=http://file-service:3005
     depends_on:
       - postgres-certificate
     networks:
@@ -77,33 +74,6 @@ services:
       - UNIVERSITY_SERVICE_URL=http://university-service:3002
     depends_on:
       - postgres-certificate
-    networks:
-      - cert-network
-
-  # File Service
-  file-service:
-    build: ./backend/file-service
-    ports:
-      - "3005:3005"
-    environment:
-      - NODE_ENV=development
-      - STORAGE_PATH=/app/uploads
-    volumes:
-      - file-storage:/app/uploads
-    networks:
-      - cert-network
-
-  # Notification Service
-  notification-service:
-    build: ./backend/notification-service
-    ports:
-      - "3006:3006"
-    environment:
-      - NODE_ENV=development
-      - SMTP_HOST=smtp.gmail.com
-      - SMTP_PORT=587
-      - SMTP_USER=${SMTP_USER}
-      - SMTP_PASS=${SMTP_PASS}
     networks:
       - cert-network
 
@@ -190,7 +160,6 @@ volumes:
   postgres-university-data:
   postgres-certificate-data:
   redis-data:
-  file-storage:
 
 networks:
   cert-network:

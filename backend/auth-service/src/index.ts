@@ -32,7 +32,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Types for our mock data
 interface User {
-  id: string;
+  userId: string;
   email: string;
   password: string;
   role: 'admin' | 'university' | 'student';
@@ -64,7 +64,7 @@ interface RegisterRequest {
 // Mock user database (in production, this would be a real database)
 const users: User[] = [
   {
-    id: '1',
+    userId: '1',
     email: 'admin@system.com',
     password: bcrypt.hashSync('admin123', 10),
     role: 'admin',
@@ -76,7 +76,7 @@ const users: User[] = [
     createdAt: new Date().toISOString()
   },
   {
-    id: '2',
+    userId: '2',
     email: 'university@bits.edu',
     password: bcrypt.hashSync('university123', 10),
     role: 'university',
@@ -89,7 +89,7 @@ const users: User[] = [
     createdAt: new Date().toISOString()
   },
   {
-    id: '3',
+    userId: '3',
     email: 'student@bits.edu',
     password: bcrypt.hashSync('student123', 10),
     role: 'student',
@@ -111,7 +111,7 @@ const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-super-secret-
 // Generate JWT tokens
 function generateTokens(user: User) {
   const payload = {
-    id: user.id,
+    userId: user.userId,
     email: user.email,
     role: user.role,
     universityId: user.universityId
@@ -178,7 +178,7 @@ app.post('/register', async (req, res) => {
 
     // Create new user
     const newUser: User = {
-      id: (users.length + 1).toString(),
+      userId: (users.length + 1).toString(),
       email,
       password: hashedPassword,
       role,
@@ -276,7 +276,7 @@ app.post('/refresh', (req, res) => {
       }
 
       // Find user
-      const user = users.find(u => u.id === decoded.id);
+      const user = users.find(u => u.userId === decoded.userId);
       if (!user || !user.isActive) {
         return res.status(403).json({ error: 'User not found or inactive' });
       }
@@ -297,7 +297,7 @@ app.post('/refresh', (req, res) => {
 // Get current user profile
 app.get('/profile', verifyToken, (req: any, res) => {
   try {
-    const user = users.find(u => u.id === req.user.id);
+    const user = users.find(u => u.userId === req.user.userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -313,10 +313,10 @@ app.get('/profile', verifyToken, (req: any, res) => {
 // Update user profile
 app.put('/profile', verifyToken, async (req: any, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     const { firstName, lastName, phone } = req.body;
 
-    const userIndex = users.findIndex(u => u.id === userId);
+    const userIndex = users.findIndex(u => u.userId === userId);
     if (userIndex === -1) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -360,7 +360,7 @@ app.post('/validate', (req, res) => {
       }
 
       // Find user to ensure they still exist and are active
-      const user = users.find(u => u.id === decoded.id);
+      const user = users.find(u => u.userId === decoded.userId);
       if (!user || !user.isActive) {
         return res.status(401).json({ 
           valid: false, 
@@ -371,7 +371,7 @@ app.post('/validate', (req, res) => {
       res.json({
         valid: true,
         user: {
-          id: decoded.id,
+          userId: decoded.userId,
           email: decoded.email,
           role: decoded.role,
           universityId: decoded.universityId
@@ -409,7 +409,7 @@ app.put('/admin/users/:userId/status', verifyToken, (req: any, res) => {
     const { userId } = req.params;
     const { isActive } = req.body;
 
-    const userIndex = users.findIndex(u => u.id === userId);
+    const userIndex = users.findIndex(u => u.userId === userId);
     if (userIndex === -1) {
       return res.status(404).json({ error: 'User not found' });
     }

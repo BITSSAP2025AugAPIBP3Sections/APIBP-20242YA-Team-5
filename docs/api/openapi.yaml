@@ -36,10 +36,6 @@ tags:
     description: Certificate issuance and management
   - name: Verification
     description: Certificate verification endpoints (public)
-  - name: Files
-    description: File upload and PDF generation
-  - name: Notifications
-    description: Email and SMS notifications
   - name: Admin
     description: System administration endpoints
 
@@ -56,7 +52,7 @@ components:
     User:
       type: object
       properties:
-        id:
+        userId:
           type: string
           format: uuid
           description: Unique user identifier
@@ -86,7 +82,8 @@ components:
         updatedAt:
           type: string
           format: date-time
-      required: [id, email, fullName, role]
+      required: [userId, email, fullName, role]
+      description: universityId, studentId is required for student role only.
 
     AuthRequest:
       type: object
@@ -151,7 +148,7 @@ components:
     University:
       type: object
       properties:
-        id:
+        universityId:
           type: string
           format: uuid
         name:
@@ -185,7 +182,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-      required: [id, name, email, publicKey, verified]
+      required: [universityId, name, email, publicKey, verified]
 
     UniversityRegisterRequest:
       type: object
@@ -208,7 +205,7 @@ components:
     Certificate:
       type: object
       properties:
-        id:
+        certificateId:
           type: string
           format: uuid
         certificateNumber:
@@ -280,7 +277,7 @@ components:
         updatedAt:
           type: string
           format: date-time
-      required: [id, certificateNumber, studentId, universityId, studentName, courseName, grade, issueDate, certificateHash, digitalSignature, verificationCode, status]
+      required: [certificateId, certificateNumber, studentId, universityId, studentName, courseName, grade, issueDate, certificateHash, digitalSignature, verificationCode, status]
 
     CertificateIssueRequest:
       type: object
@@ -318,6 +315,9 @@ components:
     CertificateUpdateRequest:
       type: object
       properties:
+        certificateNumber:
+          type: string
+          description: Unique certificate number
         grade:
           type: string
           enum: [A+, A, A-, B+, B, B-, C+, C, C-, D+, D, F]
@@ -330,15 +330,20 @@ components:
         specialization:
           type: string
           nullable: true
+      required: [certificateNumber]
+      description: Either grade, cgpa or specialization must be provided
 
     CertificateRevocationRequest:
       type: object
       properties:
+        certificateNumber:
+          type: string
+          description: Unique certificate number
         reason:
           type: string
           minLength: 10
           description: Reason for revoking the certificate
-      required: [reason]
+      required: [reason, certificateNumber]
 
     # ========== Verification Schemas ==========
     VerificationRequest:
@@ -374,7 +379,7 @@ components:
               nullable: true
             verificationMethod:
               type: string
-              enum: [api, manual, code]
+              enum: [certificate id, verification code]
             timestamp:
               type: string
               format: date-time
@@ -422,9 +427,9 @@ components:
                     type: string
                   verificationCode:
                     type: string
-                  valid:
+                  success:
                     type: boolean
-                  reason:
+                  message:
                     type: string
         message:
           type: string
@@ -436,10 +441,6 @@ components:
         certificateId:
           type: string
           format: uuid
-        template:
-          type: string
-          enum: [standard, official, transcript]
-          default: standard
       required: [certificateId]
 
     FileUploadResponse:
@@ -596,16 +597,16 @@ paths:
               university:
                 summary: University user registration
                 value:
-                  email: "admin@university.edu"
-                  password: "securePassword123"
+                  email: "admin@abc.com"
+                  password: "adminPASS123"
                   fullName: "University Admin"
                   role: "university"
               student:
                 summary: Student user registration
                 value:
-                  email: "john.doe@student.edu"
-                  password: "studentPass123"
-                  fullName: "John Doe"
+                  email: "xyzstudent@abc.com"
+                  password: "studentPASS123"
+                  fullName: "Xyz Student"
                   role: "student"
                   universityId: "550e8400-e29b-41d4-a716-446655440000"
                   studentId: "STU2024001"
@@ -636,7 +637,7 @@ paths:
     post:
       tags: [Authentication]
       summary: User login
-      description: Authenticate user and return JWT token
+      description: This is standard login for all roles to authenticate user and return JWT token.
       requestBody:
         required: true
         content:
@@ -644,7 +645,7 @@ paths:
             schema:
               $ref: '#/components/schemas/AuthRequest'
             example:
-              email: "admin@university.edu"
+              email: "admin@abc.com"
               password: "securePassword123"
       responses:
         '200':
@@ -807,7 +808,7 @@ paths:
       summary: Get university details
       description: Retrieve details of a specific university
       parameters:
-        - name: id
+        - name: universityId
           in: path
           required: true
           schema:
@@ -838,7 +839,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: id
+        - name: universityId
           in: path
           required: true
           schema:
@@ -879,7 +880,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: id
+        - name: universityId
           in: path
           required: true
           schema:
@@ -903,7 +904,7 @@ paths:
       summary: Get university public key
       description: Retrieve the public key for signature verification (public endpoint)
       parameters:
-        - name: id
+        - name: universityId
           in: path
           required: true
           schema:
@@ -946,8 +947,8 @@ paths:
             schema:
               $ref: '#/components/schemas/CertificateIssueRequest'
             example:
-              studentName: "John Doe"
-              studentEmail: "john.doe@student.edu"
+              studentName: "Xyz Student"
+              studentEmail: "xyzstudent@abc.com"
               courseName: "Bachelor of Computer Science"
               specialization: "Artificial Intelligence"
               grade: "A"
@@ -1026,7 +1027,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: id
+        - name: certificateId
           in: path
           required: true
           schema:
@@ -1058,7 +1059,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: id
+        - name: certificateId
           in: path
           required: true
           schema:
@@ -1097,7 +1098,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: id
+        - name: certificateId
           in: path
           required: true
           schema:
@@ -1172,6 +1173,18 @@ paths:
                               type: string
                   message:
                     type: string
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   # ========================================
   # ✅ VERIFICATION SERVICE (Port 3004)
@@ -1323,30 +1336,23 @@ paths:
                     type: string
 
   # ========================================
-  # 📄 FILE SERVICE (Port 3005)
+  # 📄 CERTIFICATE FILE OPERATIONS (Integrated)
   # ========================================
-  /api/files/certificates/{id}/pdf:
+  /api/certificates/{id}/pdf:
     get:
-      tags: [Files]
+      tags: [Certificates]
       summary: Download certificate PDF
       description: Download the PDF version of a certificate
       security:
         - bearerAuth: []
       parameters:
-        - name: id
+        - name: certificateId
           in: path
           required: true
           schema:
             type: string
             format: uuid
           description: Certificate ID
-        - name: template
-          in: query
-          schema:
-            type: string
-            enum: [standard, official, transcript]
-            default: standard
-          description: PDF template to use
       responses:
         '200':
           description: PDF file
@@ -1365,15 +1371,15 @@ paths:
         '404':
           $ref: '#/components/responses/NotFoundError'
 
-  /api/files/certificates/{id}/generate-pdf:
+  /api/certificates/{id}/generate-pdf:
     post:
-      tags: [Files]
+      tags: [Certificates]
       summary: Generate certificate PDF
       description: Generate a PDF for an existing certificate
       security:
         - bearerAuth: []
       parameters:
-        - name: id
+        - name: certificateId
           in: path
           required: true
           schema:
@@ -1403,10 +1409,16 @@ paths:
                         type: string
                   message:
                     type: string
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
 
-  /api/files/upload:
+  /api/certificates/upload:
     post:
-      tags: [Files]
+      tags: [Certificates]
       summary: Upload file
       description: Upload files (documents, images, etc.)
       security:
@@ -1435,73 +1447,11 @@ paths:
                 $ref: '#/components/schemas/FileUploadResponse'
         '400':
           $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
 
   # ========================================
-  # 📧 NOTIFICATION SERVICE (Port 3006)
-  # ========================================
-  /api/notifications/certificate-issued:
-    post:
-      tags: [Notifications]
-      summary: Send certificate issued notification
-      description: Send email notification when certificate is issued (internal service call)
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                certificateId:
-                  type: string
-                  format: uuid
-                studentEmail:
-                  type: string
-                  format: email
-                studentName:
-                  type: string
-                courseName:
-                  type: string
-                universityName:
-                  type: string
-              required: [certificateId, studentEmail, studentName, courseName, universityName]
-      responses:
-        '200':
-          description: Notification sent successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SuccessResponse'
-
-  /api/notifications/verification-alert:
-    post:
-      tags: [Notifications]
-      summary: Send verification alert
-      description: Send alert when certificate is verified (optional feature)
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                certificateId:
-                  type: string
-                  format: uuid
-                verifierInfo:
-                  type: string
-                verificationTime:
-                  type: string
-                  format: date-time
-      responses:
-        '200':
-          description: Alert sent successfully
-
-  # ========================================
-  # 👤 ADMIN ENDPOINTS
+  #  ADMIN ENDPOINTS
   # ========================================
   /api/admin/dashboard:
     get:
@@ -1564,11 +1514,6 @@ paths:
           schema:
             type: integer
             default: 20
-        - name: role
-          in: query
-          schema:
-            type: string
-            enum: [university, student, employer, admin]
       responses:
         '200':
           description: List of users
