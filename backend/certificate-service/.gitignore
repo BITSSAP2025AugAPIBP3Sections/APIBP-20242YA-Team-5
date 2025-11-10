@@ -53,12 +53,7 @@ surefire-reports/
 jacoco.exec
 *.coverage
 
-# === Eclipse (if someone opens in Eclipse) ===
-.project
-.classpath
-.settings/
-
-# === Node / Frontend (if using frontend under same repo) ===
+# === Node
 node_modules/
 dist/
 build/
