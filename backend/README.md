@@ -11,7 +11,6 @@ This folder contains all the microservices that make up the backend of the Stude
 | **University Service** | 3002 | University management | university_db |
 | **Certificate Service** | 3003 | Certificate issuance & signing | certificate_db |
 | **Verification Service** | 3004 | Certificate verification | certificate_db (read-only) |
-| **File Service** | 3005 | PDF generation & file handling | - |
 | **Notification Service** | 3006 | Email & SMS notifications | - |
 
 ## **Quick Start**

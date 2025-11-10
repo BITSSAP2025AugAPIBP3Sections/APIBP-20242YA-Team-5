@@ -1,0 +1,71 @@
+# === Java / Maven ===
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.iml
+*.log
+
+# Maven specific
+.mvn/
+!/.mvn/wrapper/maven-wrapper.jar
+dependency-reduced-pom.xml
+
+# === IntelliJ IDEA ===
+.idea/
+*.iws
+*.ipr
+out/
+*.swp
+*.swo
+*.bak
+
+# === OS Files ===
+.DS_Store
+Thumbs.db
+*.tmp
+*.temp
+
+# === Spring Boot specific ===
+# Application config (use example files instead)
+application.properties
+application.yml
+application-*.yml
+application-*.properties
+
+# === Logs and temp files ===
+logs/
+*.log
+*.out
+*.pid
+*.seed
+
+# === Certificates / Generated Files ===
+src/main/resources/certificates/
+src/main/resources/static/certificates/
+uploads/
+downloads/
+
+# === Test outputs ===
+test-output/
+surefire-reports/
+jacoco.exec
+*.coverage
+
+# === Eclipse (if someone opens in Eclipse) ===
+.project
+.classpath
+.settings/
+
+# === Node / Frontend (if using frontend under same repo) ===
+node_modules/
+dist/
+build/
+package-lock.json
+yarn.lock
+
+# === System ===
+*.orig
+*.rej
+*.swp

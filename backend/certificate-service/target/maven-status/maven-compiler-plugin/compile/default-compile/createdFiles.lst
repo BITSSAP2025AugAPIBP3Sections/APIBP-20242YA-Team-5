@@ -1,0 +1,15 @@
+com/certificates/dto/CertificateRevocationRequest.class
+com/certificates/dto/CertificateIssueRequest.class
+com/certificates/dto/CertificateUpdateRequest.class
+com/certificates/exception/GlobalExceptionHandler.class
+com/certificates/exception/InvalidRequestException.class
+com/certificates/model/Certificate$CertificateBuilder.class
+com/certificates/repository/CertificateRepository.class
+com/certificates/controller/CertificateController.class
+com/certificates/dto/Status.class
+com/certificates/service/CertificateService.class
+com/certificates/exception/ResourceNotFoundException.class
+com/certificates/CertificateServiceApplication.class
+com/certificates/config/WebClientConfig.class
+com/certificates/model/Certificate.class
+com/certificates/service/impl/CertificateServiceImpl.class
