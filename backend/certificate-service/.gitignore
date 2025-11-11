@@ -27,8 +27,7 @@ Thumbs.db
 *.tmp
 *.temp
 
-# === Spring Boot specific ===
-# Application config (use example files instead)
+# Application config
 application.properties
 application.yml
 application-*.yml
@@ -46,6 +45,7 @@ src/main/resources/certificates/
 src/main/resources/static/certificates/
 uploads/
 downloads/
+pdfs/
 
 # === Test outputs ===
 test-output/
@@ -60,7 +60,4 @@ build/
 package-lock.json
 yarn.lock
 
-# === System ===
-*.orig
-*.rej
-*.swp
+

@@ -2,19 +2,27 @@ package com.certificates.controller;
 
 import com.certificates.dto.*;
 import com.certificates.model.Certificate;
+import com.certificates.service.CertificateFileService;
 import com.certificates.service.CertificateService;
+import com.certificates.service.PdfService;
+import jakarta.annotation.Resource;
+import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/certificates")
 @RequiredArgsConstructor
 public class CertificateController {
     private final CertificateService service;
+    private final CertificateFileService fileService;
+    private final PdfService pdfService;
 
     @PostMapping
     public ResponseEntity<Certificate> issueCertificate(@Validated @RequestBody CertificateIssueRequest req) {
@@ -67,5 +75,33 @@ public class CertificateController {
                                 "failed", failed,
                                 "results", results),
                         "message", "Batch issuance completed"));
+    }
+
+    @PostMapping("/upload")
+    @PreAuthorize("hasAnyRole('ADMIN','ISSUER')")
+    public ResponseEntity<FileUploadResponse> uploadFile(
+            @RequestPart("file") MultipartFile file,
+            @RequestParam("type") String type) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(fileService.uploadFile(file, type));
+    }
+
+    @PostMapping("/{certificateId}/generate-pdf")
+    @PreAuthorize("hasAnyRole('ADMIN','ISSUER')")
+    public ResponseEntity<Map<String, Object>> generatePdf(
+            @PathVariable UUID certificateId,
+            @RequestBody PDFGenerationRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(pdfService.generateCertificatePdf(request.getCertificateId().toString()));
+    }
+
+    @GetMapping("/{certificateId}/pdf")
+    @PreAuthorize("hasAnyRole('ADMIN','ISSUER','STUDENT')")
+    public ResponseEntity<Resource> downloadPdf(@PathVariable UUID certificateId) throws IOException {
+        Resource pdf = (Resource) pdfService.getPdf(certificateId);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=certificate.pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 }
