@@ -48,7 +48,7 @@ public class CertificateController {
         return ResponseEntity.ok(service.updateCertificate(id, req));
     }
 
-    @PostMapping("/{id}/revoke")
+    @PostMapping("/revoke")
     public ResponseEntity<String> revokeCertificate(@RequestBody CertificateRevocationRequest req) {
         service.revokeCertificate(req);
         return ResponseEntity.ok("Certificate revoked successfully");
