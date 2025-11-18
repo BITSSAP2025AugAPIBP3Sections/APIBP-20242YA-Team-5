@@ -20,7 +20,7 @@ public class WebClientConfig {
     /** Logs each outgoing request **/
     private ExchangeFilterFunction logRequest() {
         return ExchangeFilterFunction.ofRequestProcessor(request -> {
-            System.out.println("➡️ Request: " + request.method() + " " + request.url());
+            System.out.println("Request: " + request.method() + " " + request.url());
             request.headers().forEach((name, values) ->
                     values.forEach(value -> System.out.println(name + ": " + value))
             );
@@ -31,7 +31,7 @@ public class WebClientConfig {
     /** Logs each incoming response **/
     private ExchangeFilterFunction logResponse() {
         return ExchangeFilterFunction.ofResponseProcessor(response -> {
-            System.out.println("⬅️ Response Status: " + response.statusCode());
+            System.out.println("Response Status: " + response.statusCode());
             return Mono.just(response);
         });
     }

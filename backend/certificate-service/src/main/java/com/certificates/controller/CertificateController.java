@@ -5,9 +5,10 @@ import com.certificates.model.Certificate;
 import com.certificates.service.CertificateFileService;
 import com.certificates.service.CertificateService;
 import com.certificates.service.PdfService;
-import jakarta.annotation.Resource;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -17,15 +18,17 @@ import java.util.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/api/certificates")
+@RequestMapping("/certificates")
 @RequiredArgsConstructor
 public class CertificateController {
-    private final CertificateService service;
+   private final CertificateService service;
     private final CertificateFileService fileService;
     private final PdfService pdfService;
+    Logger logger = LoggerFactory.getLogger(CertificateController.class);
 
     @PostMapping
     public ResponseEntity<Certificate> issueCertificate(@Validated @RequestBody CertificateIssueRequest req) {
+        logger.info("Issuing certificate");
         return ResponseEntity.status(HttpStatus.CREATED).body(service.issueCertificate(req));
     }
 
@@ -53,7 +56,7 @@ public class CertificateController {
 
     @PostMapping("/batch-issue")
     public ResponseEntity<Map<String, Object>> batchIssueCertificates(@RequestBody Map<String, List<CertificateIssueRequest>> request) {
-        List<CertificateIssueRequest> certs = request.get("certificates");
+        List<CertificateIssueRequest> certs = request.get("static/certificates");
         int success = 0, failed = 0;
         List<Map<String, Object>> results = new ArrayList<>();
 
@@ -86,19 +89,11 @@ public class CertificateController {
                 .body(fileService.uploadFile(file, type));
     }
 
-    @PostMapping("/{certificateId}/generate-pdf")
-    @PreAuthorize("hasAnyRole('ADMIN','ISSUER')")
-    public ResponseEntity<Map<String, Object>> generatePdf(
-            @PathVariable UUID certificateId,
-            @RequestBody PDFGenerationRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(pdfService.generateCertificatePdf(request.getCertificateId().toString()));
-    }
-
     @GetMapping("/{certificateId}/pdf")
     @PreAuthorize("hasAnyRole('ADMIN','ISSUER','STUDENT')")
-    public ResponseEntity<Resource> downloadPdf(@PathVariable UUID certificateId) throws IOException {
-        Resource pdf = (Resource) pdfService.getPdf(certificateId);
+    public ResponseEntity<org.springframework.core.io.Resource> generateAndDownloadPdf(@PathVariable UUID certificateId) throws IOException {
+        pdfService.generateCertificatePdf(certificateId.toString());
+        org.springframework.core.io.Resource pdf = pdfService.getPdf(certificateId);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=certificate.pdf")
                 .contentType(MediaType.APPLICATION_PDF)

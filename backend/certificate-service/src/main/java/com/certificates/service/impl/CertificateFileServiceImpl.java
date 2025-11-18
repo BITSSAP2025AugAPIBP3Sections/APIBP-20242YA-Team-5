@@ -17,8 +17,8 @@ import java.util.UUID;
 @Service
 public class CertificateFileServiceImpl implements CertificateFileService {
 
-    private final Path root = Paths.get("uploads");
 
+    private final Path root = Paths.get("src/main/resources/static/certificates");
     @PostConstruct
     public void init() {
         try {

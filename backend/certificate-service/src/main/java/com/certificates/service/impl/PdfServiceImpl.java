@@ -1,5 +1,6 @@
 package com.certificates.service.impl;
 
+import com.certificates.service.CertificateService;
 import com.certificates.service.PdfService;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
@@ -21,14 +22,6 @@ public class PdfServiceImpl implements PdfService {
 
     private final Path pdfRoot = Paths.get("generated-pdfs");
 
-    public PdfServiceImpl() {
-        try {
-            Files.createDirectories(pdfRoot);
-        } catch (IOException e) {
-            throw new RuntimeException("Could not create PDF storage directory!", e);
-        }
-    }
-
     @Override
     public Map<String, Object> generateCertificatePdf(String certificateId) {
         String filename = "certificate_" + certificateId + "_" +
@@ -40,8 +33,8 @@ public class PdfServiceImpl implements PdfService {
              PdfDocument pdf = new PdfDocument(writer);
              Document document = new Document(pdf)) {
 
-            document.add(new Paragraph("🎓 Certificate of Achievement"));
-            document.add(new Paragraph("This is to certify that"));
+            document.add(new Paragraph("🎓 Certificate of Achievement\n"));
+            document.add(new Paragraph("This is to certify that has successfully completed the required course of study.\n"));
             document.add(new Paragraph("Certificate ID: " + certificateId));
             document.add(new Paragraph("Issued On: " + LocalDateTime.now()));
             document.add(new Paragraph("\n\nAuthorized by: Certificate Management System"));

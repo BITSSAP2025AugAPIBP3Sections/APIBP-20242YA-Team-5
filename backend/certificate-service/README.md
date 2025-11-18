@@ -32,8 +32,8 @@ It forms part of the **Student Certificate Verification System** backend microse
 #### **Clone Repository**
 
 ```bash
-git clone https://github.com/<your-org>/<your-repo>.git
-cd backend/certificate-service
+git clone https://github.com/BITSSAP2025AugAPIBP3Sections/APIBP-20242YA-Team-5.git
+cd APIBP-20242YA-Team-5/backend/certificate-service
 ```
 
 ####  **Configure Database**
@@ -57,7 +57,7 @@ mvn spring-boot:run
 #### **Access Service**
 
 ```bash
-http://localhost:3003/api/v1/certificates
+http://localhost:3003/api/certificates
 ```
 
 ---
@@ -93,12 +93,15 @@ docker logs -f certificate-service
 ## **API Endpoints**
 
 | Method | Endpoint                                   | Description                 |
-| ------ | ------------------------------------------ | --------------------------- |
-| `POST` | `/api/v1/certificates/issue`               | Issue a new certificate     |
-| `PUT`  | `/api/v1/certificates/update`              | Update existing certificate |
-| `POST` | `/api/v1/certificates/revoke`              | Revoke a certificate        |
-| `GET`  | `/api/v1/certificates/{certificateNumber}` | Fetch certificate details   |
-| `GET`  | `/api/v1/certificates`                     | Get all certificates        |
+|--------|--------------------------------------------| --------------------------- |
+| `POST` | `/api/certificates`                        | Issue a new certificate     |
+| `PUT`  | `/api/certificates/{certificateID}`        | Update existing certificate |
+| `POST` | `/api/certificates/{certificateID}/revoke` | Revoke a certificate        |
+| `GET`  | `/api/certificates/{certificateID}`        | Fetch certificate details   |
+| `GET`  | `/api/certificates`                        | Get all certificates        |
+| `POST` | `/api/certificates/upload`                 | Update existing certificate |
+| `POST` | `/api/certificates/batch-issue`            | Revoke a certificate        |
+| `GET`  | `/api/certificates/{certificateID}/pdf`    | Revoke a certificate        |
 
 
 ---
@@ -117,36 +120,6 @@ docker logs -f certificate-service
 
 * **Auth Service**: Handles JWT validation
 * **Notification Service**: Sends certificate-related emails
-
----
-
-## **Database Schema**
-
-`schema.sql` initializes the `certificate` table with constraints and indexes:
-
-```sql
-CREATE TABLE certificate (
-    certificate_id UUID PRIMARY KEY,
-    certificate_number VARCHAR(50) UNIQUE NOT NULL,
-    student_id UUID NOT NULL,
-    university_id UUID NOT NULL,
-    student_name VARCHAR(255) NOT NULL,
-    course_name VARCHAR(255) NOT NULL,
-    specialization VARCHAR(255),
-    grade VARCHAR(10),
-    cgpa FLOAT,
-    issue_date DATE NOT NULL,
-    completion_date DATE,
-    certificate_hash VARCHAR(255),
-    digital_signature TEXT,
-    verification_code VARCHAR(20),
-    pdf_path TEXT,
-    status VARCHAR(20),
-    revocation_reason TEXT,
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP
-);
-```
 
 ---
 
