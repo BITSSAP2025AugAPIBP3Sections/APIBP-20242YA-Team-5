@@ -24,11 +24,14 @@ const Dashboard: React.FC = () => {
   const { certificates, loading } = useCertificates();
   const navigate = useNavigate();
 
+  // Ensure certificates is always an array to prevent filter errors
+  const safeCertificates = Array.isArray(certificates) ? certificates : [];
+
   // Calculate certificate statistics
-  const totalCertificates = certificates.length;
-  const activeCertificates = certificates.filter(cert => cert.status === 'ACTIVE').length;
-  const pendingCertificates = certificates.filter(cert => cert.status === 'PENDING').length;
-  const recentCertificates = certificates
+  const totalCertificates = safeCertificates.length;
+  const activeCertificates = safeCertificates.filter(cert => cert.status === 'ACTIVE').length;
+  const pendingCertificates = safeCertificates.filter(cert => cert.status === 'PENDING').length;
+  const recentCertificates = safeCertificates
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 3);
 

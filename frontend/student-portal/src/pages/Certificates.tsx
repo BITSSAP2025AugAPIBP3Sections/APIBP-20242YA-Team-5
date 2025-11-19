@@ -37,6 +37,9 @@ const Certificates: React.FC = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
+  // Ensure certificates is always an array to prevent runtime errors
+  const safeCertificates = Array.isArray(certificates) ? certificates : [];
+
   const handleStatusFilterChange = (event: any) => {
     const status = event.target.value;
     setStatusFilter(status);
@@ -158,7 +161,7 @@ const Certificates: React.FC = () => {
         </Alert>
       )}
 
-      {!loading && !error && certificates.length === 0 && (
+      {!loading && !error && safeCertificates.length === 0 && (
         <Card sx={{ textAlign: 'center', py: 8 }}>
           <CardContent>
             <SchoolOutlined sx={{ fontSize: 64, color: '#9ca3af', mb: 2 }} />
@@ -172,9 +175,9 @@ const Certificates: React.FC = () => {
         </Card>
       )}
 
-      {!loading && !error && certificates.length > 0 && (
+      {!loading && !error && safeCertificates.length > 0 && (
         <Grid container spacing={3}>
-          {certificates.map((certificate) => (
+          {safeCertificates.map((certificate) => (
             <Grid item xs={12} md={6} lg={4} key={certificate.certificateId}>
               <Card 
                 sx={{

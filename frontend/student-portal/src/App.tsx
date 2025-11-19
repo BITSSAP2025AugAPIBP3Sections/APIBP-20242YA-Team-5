@@ -1,14 +1,19 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { Container, Box } from '@mui/material';
 import Header from './components/layout/Header';
 import AcademicWatermark from './components/common/AcademicWatermark';
+import ProtectedRoute from './components/ProtectedRoute';
 import Dashboard from './pages/Dashboard';
 import Certificates from './pages/Certificates';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
+import Signup from './pages/Signup';
+import { authService } from './services';
 
 const App: React.FC = () => {
+  const isAuthenticated = authService.isAuthenticated();
+
   return (
     <Box sx={{
       minHeight: '100vh',
@@ -16,17 +21,42 @@ const App: React.FC = () => {
       position: 'relative'
     }}>
       <AcademicWatermark />
-      <Header />
+      {isAuthenticated && <Header />}
       <Container maxWidth="lg" sx={{ 
-        pt: 4, 
+        pt: isAuthenticated ? 12 : 0, 
         pb: 8,
         px: { xs: 2, sm: 3, md: 4 }
       }}>
         <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/certificates" element={<Certificates />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/login" element={<Login />} />
+          {/* Public routes */}
+          <Route path="/login" element={
+            isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
+          } />
+          <Route path="/signup" element={
+            isAuthenticated ? <Navigate to="/dashboard" replace /> : <Signup />
+          } />
+          
+          {/* Protected routes */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/certificates" element={
+            <ProtectedRoute>
+              <Certificates />
+            </ProtectedRoute>
+          } />
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          } />
+          
+          {/* Default redirect */}
+          <Route path="/" element={
+            <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />
+          } />
         </Routes>
       </Container>
     </Box>

@@ -17,19 +17,24 @@ import {
   Lock,
   Visibility,
   VisibilityOff,
+  Person,
   School,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services';
 
-export const Login: React.FC = () => {
+export const Signup: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({});
   const [formData, setFormData] = useState({
+    fullName: '',
     email: '',
     password: '',
+    confirmPassword: ''
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,6 +44,32 @@ export const Login: React.FC = () => {
       [name]: value,
     }));
     setError(null);
+
+    // Clear field-specific errors and validate on the fly
+    const newFieldErrors = { ...fieldErrors };
+    delete newFieldErrors[name];
+
+    // Real-time validation
+    if (name === 'password') {
+      if (value.length > 0 && value.length < 8) {
+        newFieldErrors[name] = 'Password must be at least 8 characters long';
+      }
+    }
+    
+    if (name === 'confirmPassword') {
+      if (value.length > 0 && value !== formData.password) {
+        newFieldErrors[name] = 'Passwords do not match';
+      }
+    }
+
+    if (name === 'email') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (value.length > 0 && !emailRegex.test(value)) {
+        newFieldErrors[name] = 'Please enter a valid email address';
+      }
+    }
+
+    setFieldErrors(newFieldErrors);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,8 +77,47 @@ export const Login: React.FC = () => {
     setLoading(true);
     setError(null);
 
+    // Validate required fields
+    if (!formData.fullName.trim()) {
+      setError('Full name is required');
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.email.trim()) {
+      setError('Email is required');
+      setLoading(false);
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Please enter a valid email address');
+      setLoading(false);
+      return;
+    }
+
+    // Validate password length
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters long');
+      setLoading(false);
+      return;
+    }
+
+    // Validate passwords match
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
+
     try {
-      await authService.login(formData);
+      await authService.signup({
+        fullName: formData.fullName,
+        email: formData.email,
+        password: formData.password
+      });
       navigate('/dashboard');
     } catch (err: any) {
       setError(err.message);
@@ -58,6 +128,10 @@ export const Login: React.FC = () => {
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
+  };
+
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword);
   };
 
   return (
@@ -78,7 +152,7 @@ export const Login: React.FC = () => {
                 Student Portal
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Sign in to your student account
+                Create your student account
               </Typography>
             </Box>
 
@@ -91,6 +165,24 @@ export const Login: React.FC = () => {
             <form onSubmit={handleSubmit}>
               <TextField
                 fullWidth
+                label="Full Name"
+                name="fullName"
+                value={formData.fullName}
+                onChange={handleInputChange}
+                margin="normal"
+                required
+                disabled={loading}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Person />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+
+              <TextField
+                fullWidth
                 label="Email"
                 name="email"
                 type="email"
@@ -99,6 +191,8 @@ export const Login: React.FC = () => {
                 margin="normal"
                 required
                 disabled={loading}
+                error={!!fieldErrors.email}
+                helperText={fieldErrors.email}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -118,6 +212,8 @@ export const Login: React.FC = () => {
                 margin="normal"
                 required
                 disabled={loading}
+                error={!!fieldErrors.password}
+                helperText={fieldErrors.password || "Minimum 8 characters"}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -138,6 +234,38 @@ export const Login: React.FC = () => {
                 }}
               />
 
+              <TextField
+                fullWidth
+                label="Confirm Password"
+                name="confirmPassword"
+                type={showConfirmPassword ? 'text' : 'password'}
+                value={formData.confirmPassword}
+                onChange={handleInputChange}
+                margin="normal"
+                required
+                disabled={loading}
+                error={!!fieldErrors.confirmPassword}
+                helperText={fieldErrors.confirmPassword}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Lock />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle confirm password visibility"
+                        onClick={toggleConfirmPasswordVisibility}
+                        edge="end"
+                      >
+                        {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+
               <Button
                 type="submit"
                 fullWidth
@@ -146,19 +274,19 @@ export const Login: React.FC = () => {
                 disabled={loading}
                 sx={{ mt: 3, mb: 2, py: 1.5 }}
               >
-                {loading ? 'Signing In...' : 'Sign In'}
+                {loading ? 'Creating Account...' : 'Sign Up'}
               </Button>
 
               <Box sx={{ textAlign: 'center', mt: 2 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Don't have an account?{' '}
+                  Already have an account?{' '}
                   <Link
                     component="button"
                     variant="body2"
-                    onClick={() => navigate('/signup')}
+                    onClick={() => navigate('/login')}
                     sx={{ textDecoration: 'none' }}
                   >
-                    Sign up here
+                    Sign in here
                   </Link>
                 </Typography>
               </Box>
@@ -170,4 +298,4 @@ export const Login: React.FC = () => {
   );
 };
 
-export default Login;
+export default Signup;
