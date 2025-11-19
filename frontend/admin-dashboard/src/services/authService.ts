@@ -8,7 +8,7 @@ export const authService = {
       const userData = response.data.data;
       
       // Only allow admin users
-      if (userData.role !== 'admin') {
+      if (userData.role !== 'ADMIN' && userData.role !== 'admin') {
         throw new Error('Access denied. Admin privileges required.');
       }
       
@@ -47,7 +47,7 @@ export const authService = {
       const response = await authApi.get<ApiResponse<AuthUser>>('/auth/me');
       const userData = response.data.data;
       
-      if (userData.role !== 'admin') {
+      if (userData.role !== 'ADMIN' && userData.role !== 'admin') {
         throw new Error('Access denied. Admin privileges required.');
       }
       
@@ -65,7 +65,7 @@ export const authService = {
       if (!storedUser) return null;
       
       const userData = JSON.parse(storedUser);
-      if (userData.role !== 'admin') {
+      if (userData.role !== 'ADMIN' && userData.role !== 'admin') {
         localStorage.removeItem('admin_token');
         localStorage.removeItem('admin_user');
         return null;
@@ -80,6 +80,6 @@ export const authService = {
   isAuthenticated(): boolean {
     const token = localStorage.getItem('admin_token');
     const user = this.getStoredUser();
-    return !!(token && user && user.role === 'admin');
+    return !!(token && user && (user.role === 'ADMIN' || user.role === 'admin'));
   },
 };
