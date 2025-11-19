@@ -3,8 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Layout } from './components/Layout';
-import { Dashboard, UserManagement } from './pages';
-// import { authService } from './services';
+import { Dashboard, UserManagement, Login } from './pages';
+import { authService } from './services';
 
 const theme = createTheme({
   palette: {
@@ -56,7 +56,7 @@ const App: React.FC = () => {
           {/* Public routes */}
           <Route 
             path="/login" 
-            element={<Navigate to="/dashboard" replace />} 
+            element={<Login />} 
           />
           
           {/* Protected routes */}
@@ -182,10 +182,24 @@ const App: React.FC = () => {
           />
           
           {/* Default redirect */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route 
+            path="/" 
+            element={
+              authService.isAuthenticated() 
+                ? <Navigate to="/dashboard" replace />
+                : <Navigate to="/login" replace />
+            } 
+          />
           
           {/* Catch all route */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route 
+            path="*" 
+            element={
+              authService.isAuthenticated() 
+                ? <Navigate to="/dashboard" replace />
+                : <Navigate to="/login" replace />
+            } 
+          />
         </Routes>
       </Router>
     </ThemeProvider>

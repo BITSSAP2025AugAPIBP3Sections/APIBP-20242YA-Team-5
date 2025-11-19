@@ -144,18 +144,6 @@ export const Login: React.FC = () => {
               {loading ? 'Signing In...' : 'Sign In'}
             </Button>
           </form>
-
-          <Box sx={{ mt: 3, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-            <Typography variant="caption" color="text.secondary" display="block">
-              Demo Admin Credentials:
-            </Typography>
-            <Typography variant="caption" color="text.secondary" display="block">
-              Email: admin@abc.com
-            </Typography>
-            <Typography variant="caption" color="text.secondary" display="block">
-              Password: adminPASS123
-            </Typography>
-          </Box>
         </CardContent>
       </Card>
     </Container>

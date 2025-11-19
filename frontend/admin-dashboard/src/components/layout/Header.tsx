@@ -18,7 +18,7 @@ import {
   Menu as MenuIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-// import { authService } from '../../services';
+import { authService } from '../../services';
 
 interface HeaderProps {
   title: string;
@@ -28,8 +28,9 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ title, onMenuClick }) => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  // Mock user for development
-  const user = { fullName: 'Admin User', email: 'admin@example.com' };
+  
+  // Get current user from auth service
+  const user = authService.getStoredUser() || { fullName: 'Admin User', email: 'admin@example.com' };
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -41,12 +42,14 @@ export const Header: React.FC<HeaderProps> = ({ title, onMenuClick }) => {
 
   const handleLogout = async () => {
     try {
-      // await authService.logout();
-      navigate('/dashboard'); // Just redirect to dashboard for now
+      await authService.logout();
+      handleClose();
+      navigate('/login');
     } catch (error) {
       console.error('Logout error:', error);
       // Force logout even if API call fails
-      navigate('/dashboard');
+      handleClose();
+      navigate('/login');
     }
   };
 
