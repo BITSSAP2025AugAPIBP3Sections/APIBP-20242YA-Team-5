@@ -2,8 +2,14 @@ export interface User {
   id: string;
   email: string;
   fullName: string;
-  role: 'university' | 'student' | 'employer' | 'admin';
+  role: 'UNIVERSITY' | 'STUDENT' | 'EMPLOYER' | 'ADMIN';
   isVerified: boolean;
+  isActive?: boolean;
+  phone?: string;
+  universityId?: string;
+  studentId?: string;
+  employeeId?: string;
+  lastLoginAt?: string;
   createdAt: string;
   updatedAt?: string;
   university?: {
@@ -93,12 +99,10 @@ export interface SystemHealth {
 
 export interface PaginatedResponse<T> {
   data: T[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
 }
 
 export interface ApiResponse<T> {
