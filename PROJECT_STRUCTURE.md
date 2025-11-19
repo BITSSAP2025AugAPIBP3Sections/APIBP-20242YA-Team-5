@@ -71,13 +71,15 @@ APIBP-20242YA-Team-5/
 
 ### **4. Certificate Service** (`certificate-service/`)
 - **Purpose**: Certificate issuance and management
-- **Technology**: Node.js + Express + Crypto
+- **Technology**: Spring Boot + Java 17 + Maven
 - **Port**: 3003
-- **Database**: PostgreSQL (certificate-db)
+- **Database**: PostgreSQL (certificate-db) with JPA/Hibernate
 - **Responsibilities**:
   - Certificate creation and issuance
   - Digital signature generation
   - Certificate metadata management
+  - PDF certificate generation
+  - File upload and management
   - Batch certificate operations
   - Certificate revocation
 
