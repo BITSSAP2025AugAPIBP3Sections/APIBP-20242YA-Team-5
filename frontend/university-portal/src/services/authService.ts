@@ -13,7 +13,7 @@ export const authService = {
       const userData = response.data.data!;
       
       // Only allow university users
-      if (userData.role !== 'university') {
+      if (userData.role !== 'university' && userData.role !== 'UNIVERSITY') {
         throw new Error('Access denied. University account required.');
       }
       
@@ -94,7 +94,7 @@ export const authService = {
       
       const userData = response.data.data!;
       
-      if (userData.role !== 'university') {
+      if (userData.role !== 'university' && userData.role !== 'UNIVERSITY') {
         throw new Error('Access denied. University account required.');
       }
       

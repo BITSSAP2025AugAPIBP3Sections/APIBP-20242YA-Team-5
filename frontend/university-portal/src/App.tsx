@@ -6,6 +6,8 @@ import { Layout } from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
+import IssueCertificate from './pages/IssueCertificate';
+import CertificateManagement from './pages/CertificateManagement';
 import { authService } from './services';
 
 // Create theme similar to student portal
@@ -89,12 +91,7 @@ const App: React.FC = () => {
             path="/issue-certificate"
             element={
               <ProtectedRoute>
-                <Layout title="Issue Certificate">
-                  <div style={{ padding: 32, textAlign: 'center' }}>
-                    <h2>Issue Certificate</h2>
-                    <p>Certificate issuance form coming soon...</p>
-                  </div>
-                </Layout>
+                <IssueCertificate />
               </ProtectedRoute>
             }
           />
@@ -103,12 +100,7 @@ const App: React.FC = () => {
             path="/certificates"
             element={
               <ProtectedRoute>
-                <Layout title="Certificate Management">
-                  <div style={{ padding: 32, textAlign: 'center' }}>
-                    <h2>Certificate Management</h2>
-                    <p>Certificate management coming soon...</p>
-                  </div>
-                </Layout>
+                <CertificateManagement />
               </ProtectedRoute>
             }
           />

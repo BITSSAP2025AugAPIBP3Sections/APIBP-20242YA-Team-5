@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Typography,
@@ -8,6 +8,8 @@ import {
   Box,
   Avatar,
   IconButton,
+  Button,
+  Alert,
 } from '@mui/material';
 import {
   AssignmentOutlined,
@@ -16,7 +18,12 @@ import {
   VerifiedUserOutlined,
   Refresh,
   TrendingUp,
+  Add,
+  Visibility,
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
+import { CertificateService } from '../services/certificateService';
+import { Certificate } from '../types';
 
 // Temporary mock data - will be replaced with real API calls
 const mockStats = {
