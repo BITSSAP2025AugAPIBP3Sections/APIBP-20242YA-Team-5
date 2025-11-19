@@ -42,10 +42,10 @@ logs/
 
 # === Certificates / Generated Files ===
 src/main/resources/static/certificates/
-src/main/resources/static/certificates/
 uploads/
 downloads/
 pdfs/
+generated-pdfs/
 target/
 
 # === Test outputs ===
@@ -54,14 +54,13 @@ surefire-reports/
 jacoco.exec
 *.coverage
 test/
-target/
 
-# === Node
-node_modules/
-dist/
-build/
-package-lock.json
-yarn.lock
+# === Node.js (removed since using Java only) ===
+# node_modules/
+# dist/
+# build/
+# package-lock.json
+# yarn.lock
 
 
 
