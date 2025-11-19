@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 public class AuthResponse {
     private boolean success;
     private String message;
-    private Object data; // Changed from UserData to Object for flexibility
+    private UserData data;
 
     @Data
     @Builder
