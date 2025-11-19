@@ -139,7 +139,7 @@ export const UserManagement: React.FC = () => {
   };
 
   // Since we're doing filtering on the backend, we don't need to filter here
-  const displayUsers = users?.data || [];
+  const displayUsers = users?.content || [];
 
   const getRoleColor = (role: string) => {
     switch (role) {

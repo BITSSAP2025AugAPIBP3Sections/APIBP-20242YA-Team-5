@@ -32,11 +32,14 @@ public class AdminUserController {
         Page<UserDto> users = adminUserService.getUsers(page, size, search, role);
         
         PaginatedResponse<UserDto> response = PaginatedResponse.<UserDto>builder()
-                .data(users.getContent())
-                .page(page + 1) // Frontend expects 1-based indexing
-                .limit(size)
-                .total(users.getTotalElements())
+                .content(users.getContent())
+                .page(page)
+                .size(size)
+                .totalElements(users.getTotalElements())
                 .totalPages(users.getTotalPages())
+                .first(users.isFirst())
+                .last(users.isLast())
+                .empty(users.isEmpty())
                 .build();
         
         return ResponseEntity.ok(response);

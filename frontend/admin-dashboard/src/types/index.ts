@@ -98,11 +98,14 @@ export interface SystemHealth {
 }
 
 export interface PaginatedResponse<T> {
-  data: T[];
+  content: T[];
   page: number;
-  limit: number;
-  total: number;
+  size: number;
+  totalElements: number;
   totalPages: number;
+  first: boolean;
+  last: boolean;
+  empty: boolean;
 }
 
 export interface ApiResponse<T> {

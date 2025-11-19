@@ -179,7 +179,7 @@ export const adminService = {
     const users = await this.getUsers(1, 1000); // Get all users
     const csvContent = [
       'ID,Name,Email,Role,Verified,Created',
-      ...users.data.map(user => 
+      ...users.content.map((user: User) => 
         `${user.id},${user.fullName},${user.email},${user.role},${user.isVerified},${user.createdAt}`
       )
     ].join('\n');
