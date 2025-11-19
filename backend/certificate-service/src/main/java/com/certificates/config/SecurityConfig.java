@@ -18,6 +18,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
             http.csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults()) // Enable CORS
                 .authorizeHttpRequests(auth -> auth
 //                    .requestMatchers("/api/certificates/upload").hasAnyRole("ADMIN", "UNIVERSITY")
 //                    .requestMatchers("/api/certificates/**").authenticated()

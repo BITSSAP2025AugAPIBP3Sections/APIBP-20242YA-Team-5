@@ -30,7 +30,7 @@ export interface Student {
 
 // Certificate-related types
 export interface Certificate {
-  id: string;
+  certificateId: string;
   certificateNumber: string;
   studentId: string;
   studentName: string;
@@ -52,14 +52,14 @@ export interface Certificate {
 }
 
 export interface CertificateIssueRequest {
-  studentId: string;
   studentName: string;
+  studentEmail: string;
   courseName: string;
   specialization?: string;
   grade: string;
   cgpa?: number;
   issueDate: string;
-  completionDate: string;
+  completionDate?: string;
 }
 
 export interface CertificateUpdateRequest {
