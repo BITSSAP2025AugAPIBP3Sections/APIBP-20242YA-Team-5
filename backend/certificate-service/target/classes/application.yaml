@@ -5,20 +5,15 @@ server:
 
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/certificate_db}
-    username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    password: ${SPRING_DATASOURCE_PASSWORD:password}
+    url: jdbc:postgresql://localhost:5432/certificatesdb
+    username: sa
+    password: admin
     driver-class-name: org.postgresql.Driver
   jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: update            # For development. Use 'validate' or migrations in prod.
+      ddl-auto: update
     show-sql: false
-    properties:
-      hibernate:
-        format_sql: true
-  jackson:
-    serialization:
-      write-dates-as-timestamps: false
 
 logging:
   level:
@@ -26,20 +21,17 @@ logging:
     com.studentcert: DEBUG
     org.springframework.web: INFO
 
-# External Auth Service (used to validate tokens / retrieve user roles).
 auth:
   service:
     url: ${AUTH_SERVICE_URL:http://auth-service:3001}
-    verify-endpoint: ${AUTH_VERIFY_ENDPOINT:/api/auth/verify} # e.g. GET /api/auth/verify
+    verify-endpoint: ${AUTH_VERIFY_ENDPOINT:/api/auth/verify}
 
-# OpenAPI / Swagger UI
 springdoc:
   api-docs:
     path: /api-docs
   swagger-ui:
     path: /swagger-ui.html
 
-# Actuator (health & metrics)
 management:
   endpoints:
     web:
@@ -48,4 +40,3 @@ management:
   endpoint:
     health:
       show-details: when_authorized
-
