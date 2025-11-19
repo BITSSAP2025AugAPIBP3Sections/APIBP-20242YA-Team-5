@@ -50,14 +50,17 @@ services:
     networks:
       - cert-network
 
-  # Certificate Service
+  # Certificate Service (Spring Boot)
   certificate-service:
     build: ./backend/certificate-service
     ports:
       - "3003:3003"
     environment:
-      - NODE_ENV=development
-      - DATABASE_URL=postgresql://postgres:password@postgres-certificate:5432/certificate_db
+      - SPRING_PROFILES_ACTIVE=development
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-certificate:5432/certificate_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+      - AUTH_SERVICE_URL=http://auth-service:3001
     depends_on:
       - postgres-certificate
     networks:
