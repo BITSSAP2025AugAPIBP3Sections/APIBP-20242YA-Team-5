@@ -1,0 +1,17 @@
+com/certverify/verification/dto/VerificationResponse$VerificationResponseBuilder.class
+com/certverify/verification/model/VerificationResult.class
+com/certverify/verification/dto/VerificationResponse.class
+com/certverify/verification/VerificationServiceApplication.class
+com/certverify/verification/model/University.class
+com/certverify/verification/controller/HealthController.class
+com/certverify/verification/controller/VerificationController.class
+com/certverify/verification/config/RestTemplateConfig.class
+com/certverify/verification/dto/VerificationRequest.class
+com/certverify/verification/service/VerificationService.class
+com/certverify/verification/model/VerificationResult$VerificationResultBuilder.class
+com/certverify/verification/util/CryptoUtil.class
+com/certverify/verification/service/UniversityServiceClient.class
+com/certverify/verification/dto/BulkVerificationRequest.class
+com/certverify/verification/service/CertificateServiceClient.class
+com/certverify/verification/model/Certificate.class
+com/certverify/verification/config/CorsConfig.class
