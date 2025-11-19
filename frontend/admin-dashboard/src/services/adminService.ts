@@ -1,4 +1,4 @@
-import api from './api';
+import api, { authApi } from './api';
 import { 
   DashboardStats, 
   User, 
@@ -67,122 +67,36 @@ export const adminService = {
   },
 
   // User management
-  async getUsers(page = 1, limit = 20): Promise<PaginatedResponse<User>> {
-    // Mock user data for development
-    const mockUsers: User[] = [
-      {
-        id: '1',
-        email: 'admin@abc.com',
-        fullName: 'Admin User',
-        role: 'admin',
-        isVerified: true,
-        createdAt: '2024-01-15T08:30:00Z',
-        updatedAt: '2024-11-18T10:15:00Z'
-      },
-      {
-        id: '2',
-        email: 'stanford@university.edu',
-        fullName: 'Stanford University Admin',
-        role: 'university',
-        isVerified: true,
-        createdAt: '2024-02-01T09:00:00Z',
-        university: {
-          id: 'uni1',
-          name: 'Stanford University'
-        }
-      },
-      {
-        id: '3',
-        email: 'john.doe@student.edu',
-        fullName: 'John Doe',
-        role: 'student',
-        isVerified: true,
-        createdAt: '2024-03-15T14:20:00Z'
-      },
-      {
-        id: '4',
-        email: 'hr@techcorp.com',
-        fullName: 'Sarah Wilson',
-        role: 'employer',
-        isVerified: true,
-        createdAt: '2024-04-10T11:45:00Z'
-      },
-      {
-        id: '5',
-        email: 'mit@university.edu',
-        fullName: 'MIT Registration Office',
-        role: 'university',
-        isVerified: false,
-        createdAt: '2024-05-20T16:30:00Z',
-        university: {
-          id: 'uni2',
-          name: 'Massachusetts Institute of Technology'
-        }
-      },
-      {
-        id: '6',
-        email: 'jane.smith@student.edu',
-        fullName: 'Jane Smith',
-        role: 'student',
-        isVerified: true,
-        createdAt: '2024-06-01T13:15:00Z'
-      },
-      {
-        id: '7',
-        email: 'recruiting@startupco.com',
-        fullName: 'Mike Johnson',
-        role: 'employer',
-        isVerified: false,
-        createdAt: '2024-07-12T09:30:00Z'
-      },
-      {
-        id: '8',
-        email: 'berkeley@university.edu',
-        fullName: 'UC Berkeley Admin',
-        role: 'university',
-        isVerified: true,
-        createdAt: '2024-08-05T12:00:00Z',
-        university: {
-          id: 'uni3',
-          name: 'University of California, Berkeley'
-        }
-      }
-    ];
-
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedUsers = mockUsers.slice(startIndex, endIndex);
-
-    return {
-      data: paginatedUsers,
-      pagination: {
-        page,
-        limit,
-        total: mockUsers.length,
-        totalPages: Math.ceil(mockUsers.length / limit)
-      }
-    };
+  async getUsers(page = 1, limit = 20, search?: string, role?: string): Promise<PaginatedResponse<User>> {
+    const params = new URLSearchParams({
+      page: (page - 1).toString(), // Backend expects 0-based indexing
+      size: limit.toString()
+    });
+    
+    if (search && search.trim()) {
+      params.append('search', search.trim());
+    }
+    
+    if (role && role !== 'all') {
+      params.append('role', role.toUpperCase());
+    }
+    
+    const response = await authApi.get<PaginatedResponse<User>>(`/admin/users?${params}`);
+    return response.data;
   },
 
   async getUserById(id: string): Promise<User> {
-    // Mock implementation - find user by ID
-    const users = await this.getUsers();
-    const user = users.data.find(u => u.id === id);
-    if (!user) throw new Error('User not found');
-    return user;
+    const response = await authApi.get<ApiResponse<User>>(`/admin/users/${id}`);
+    return response.data.data;
   },
 
   async updateUser(id: string, data: Partial<User>): Promise<User> {
-    // Mock implementation - simulate update
-    console.log('Updating user', id, 'with data', data);
-    const user = await this.getUserById(id);
-    return { ...user, ...data, updatedAt: new Date().toISOString() };
+    const response = await authApi.put<ApiResponse<User>>(`/admin/users/${id}`, data);
+    return response.data.data;
   },
 
   async deleteUser(id: string): Promise<void> {
-    // Mock implementation - simulate deletion
-    console.log('Deleting user', id);
-    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
+    await authApi.delete(`/admin/users/${id}`);
   },
 
   // University management

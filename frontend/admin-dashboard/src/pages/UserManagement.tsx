@@ -48,29 +48,33 @@ export const UserManagement: React.FC = () => {
   const [editUser, setEditUser] = useState<User | null>(null);
   const [updating, setUpdating] = useState(false);
 
-  const loadUsers = async (currentPage = 1) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await adminService.getUsers(currentPage, 20);
-      setUsers(data);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load users');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    loadUsers(page);
-  }, [page]);
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await adminService.getUsers(page, 20, searchTerm, roleFilter);
+        setUsers(data);
+      } catch (err: any) {
+        setError(err.message || 'Failed to load users');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchUsers();
+  }, [page, searchTerm, roleFilter]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
+    const value = e.target.value;
+    setSearchTerm(value);
+    setPage(1); // Reset to first page when searching
   };
 
   const handleRoleFilterChange = (e: any) => {
-    setRoleFilter(e.target.value);
+    const value = e.target.value;
+    setRoleFilter(value);
+    setPage(1); // Reset to first page when filtering
   };
 
   const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
@@ -96,7 +100,9 @@ export const UserManagement: React.FC = () => {
         role: editUser.role,
         isVerified: editUser.isVerified,
       });
-      await loadUsers(page);
+      // Reload users to reflect changes
+      const data = await adminService.getUsers(page, 20, searchTerm, roleFilter);
+      setUsers(data);
       setEditUser(null);
     } catch (err: any) {
       setError(err.message || 'Failed to update user');
@@ -110,7 +116,9 @@ export const UserManagement: React.FC = () => {
 
     try {
       await adminService.deleteUser(userId);
-      await loadUsers(page);
+      // Reload users to reflect changes
+      const data = await adminService.getUsers(page, 20, searchTerm, roleFilter);
+      setUsers(data);
     } catch (err: any) {
       setError(err.message || 'Failed to delete user');
     }
@@ -130,19 +138,15 @@ export const UserManagement: React.FC = () => {
     }
   };
 
-  const filteredUsers = users?.data.filter((user) => {
-    const matchesSearch = user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-    return matchesSearch && matchesRole;
-  }) || [];
+  // Since we're doing filtering on the backend, we don't need to filter here
+  const displayUsers = users?.data || [];
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'admin': return 'error';
-      case 'university': return 'primary';
-      case 'student': return 'info';
-      case 'employer': return 'success';
+      case 'ADMIN': return 'error';
+      case 'UNIVERSITY': return 'primary';
+      case 'STUDENT': return 'info';
+      case 'EMPLOYER': return 'success';
       default: return 'default';
     }
   };
@@ -195,10 +199,10 @@ export const UserManagement: React.FC = () => {
                 startAdornment={<FilterList sx={{ mr: 1 }} />}
               >
                 <MenuItem value="all">All Roles</MenuItem>
-                <MenuItem value="admin">Admin</MenuItem>
-                <MenuItem value="university">University</MenuItem>
-                <MenuItem value="student">Student</MenuItem>
-                <MenuItem value="employer">Employer</MenuItem>
+                <MenuItem value="ADMIN">Admin</MenuItem>
+                <MenuItem value="UNIVERSITY">University</MenuItem>
+                <MenuItem value="STUDENT">Student</MenuItem>
+                <MenuItem value="EMPLOYER">Employer</MenuItem>
               </Select>
             </FormControl>
           </Box>
@@ -227,14 +231,14 @@ export const UserManagement: React.FC = () => {
                       Loading users...
                     </TableCell>
                   </TableRow>
-                ) : filteredUsers.length === 0 ? (
+                ) : displayUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} sx={{ textAlign: 'center', py: 3 }}>
+                    <TableCell colSpan={6} align="center">
                       No users found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredUsers.map((user) => (
+                  displayUsers.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell>{user.fullName}</TableCell>
                       <TableCell>{user.email}</TableCell>
@@ -264,7 +268,7 @@ export const UserManagement: React.FC = () => {
                         >
                           <Edit />
                         </IconButton>
-                        {user.role !== 'admin' && (
+                        {user.role !== 'ADMIN' && (
                           <IconButton
                             size="small"
                             onClick={() => handleDeleteUser(user.id)}
@@ -281,10 +285,10 @@ export const UserManagement: React.FC = () => {
             </Table>
           </TableContainer>
 
-          {users && users.pagination.totalPages > 1 && (
+          {users && users.totalPages && users.totalPages > 1 && (
             <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
               <Pagination
-                count={users.pagination.totalPages}
+                count={users.totalPages}
                 page={page}
                 onChange={handlePageChange}
                 color="primary"
