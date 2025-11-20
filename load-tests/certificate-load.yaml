@@ -1,0 +1,114 @@
+config:
+  target: "http://localhost:3003"
+  phases:
+    - duration: 60
+      arrivalRate: 10
+      name: "Normal Load Test"
+
+  defaults:
+    headers:
+      Content-Type: "application/json"
+
+  processor: './processor.js'
+
+scenarios:
+  # --------------------------------------------------------
+  # 1. Issue Certificate
+  # --------------------------------------------------------
+  - name: "Issue Certificate"
+    weight: 3
+    flow:
+      - post:
+          url: "/certificates"
+          beforeRequest: beforeRequest
+          json:
+            studentName: "{{ studentName }}"
+            studentEmail: "{{ studentEmail }}"
+            courseName: "Computer Science"
+            specialization: "AI"
+            grade: "A"
+            cgpa: 9.2
+            issueDate: "2024-01-01"
+            completionDate: "2024-12-01"
+          capture:
+            - json: "$.id"
+              as: "lastCreatedCertId"
+
+  # --------------------------------------------------------
+  # 2. Get All Certificates
+  # --------------------------------------------------------
+  - name: "Get All Certificates"
+    weight: 2
+    flow:
+      - get:
+          url: "/certificates"
+
+  # --------------------------------------------------------
+  # 3. Get Certificate By ID
+  # --------------------------------------------------------
+  - name: "Get Certificate By ID"
+    weight: 3
+    flow:
+      - get:
+          url: "/certificates/{{ lastCreatedCertId }}"
+
+  # --------------------------------------------------------
+  # 4. Update Certificate
+  # --------------------------------------------------------
+  - name: "Update Certificate"
+    weight: 2
+    flow:
+      - put:
+          url: "/certificates/{{ lastCreatedCertId }}"
+          json:
+            certificateNumber: "CERT-{{ lastCreatedCertId }}"
+            grade: "A+"
+            cgpa: 9.5
+            specialization: "Machine Learning"
+
+  # --------------------------------------------------------
+  # 5. Revoke Certificate
+  # --------------------------------------------------------
+  - name: "Revoke Certificate"
+    weight: 1
+    flow:
+      - post:
+          url: "/certificates/revoke"
+          json:
+            certificateNumber: "CERT-{{ lastCreatedCertId }}"
+            reason: "Student requested revocation for testing"
+
+  # --------------------------------------------------------
+  # 6. Batch Issue Certificates
+  # --------------------------------------------------------
+  - name: "Batch Issue Certificates"
+    weight: 1
+    flow:
+      - post:
+          url: "/certificates/batch-issue"
+          json:
+            certificates:
+              - studentName: "Alice Batch"
+                studentEmail: "alice.batch@example.com"
+                courseName: "Cybersecurity"
+                specialization: "Network Security"
+                grade: "A"
+                cgpa: 9.1
+                issueDate: "2024-02-01"
+
+              - studentName: "Bob Batch"
+                studentEmail: "bob.batch@example.com"
+                courseName: "Data Science"
+                specialization: "Data Engineering"
+                grade: "B+"
+                cgpa: 8.3
+                issueDate: "2024-02-10"
+
+  # --------------------------------------------------------
+  # 7. Download PDF
+  # --------------------------------------------------------
+  - name: "Download PDF"
+    weight: 2
+    flow:
+      - get:
+          url: "/certificates/{{ lastCreatedCertId }}/pdf"
