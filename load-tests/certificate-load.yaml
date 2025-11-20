@@ -1,5 +1,5 @@
 config:
-  target: "http://localhost:3003"
+  target: "http://localhost:3003/api"
   phases:
     - duration: 60
       arrivalRate: 10
