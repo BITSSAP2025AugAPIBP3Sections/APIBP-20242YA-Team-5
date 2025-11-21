@@ -115,14 +115,15 @@ export const Signup: React.FC = () => {
     }
 
     try {
-      await authService.signup({
+      const response = await authService.signup({
         fullName: formData.fullName,
         email: formData.email,
         password: formData.password
       });
       
-      // Show success message instead of immediate navigation
-      setSuccessMessage('Registration successful! Pending admin verification. You will be redirected to login.');
+      // Show success message with UID
+      const successMsg = response?.message || 'Registration successful! Pending admin verification.';
+      setSuccessMessage(successMsg + ' You will be redirected to login.');
       
       // Redirect to login after 3 seconds
       setTimeout(() => {

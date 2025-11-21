@@ -70,8 +70,8 @@ public class AdminUserService {
         if (request.getStudentId() != null) {
             user.setStudentId(request.getStudentId());
         }
-        if (request.getEmployeeId() != null) {
-            user.setEmployeeId(request.getEmployeeId());
+        if (request.getUniversityUid() != null) {
+            user.setUniversityUid(request.getUniversityUid());
         }
         
         user.setUpdatedAt(LocalDateTime.now());
@@ -130,7 +130,8 @@ public class AdminUserService {
                 .phone(user.getPhone())
                 .universityId(user.getUniversityId())
                 .studentId(user.getStudentId())
-                .employeeId(user.getEmployeeId())
+                .uid(user.getUid())
+                .universityUid(user.getUniversityUid())
                 .lastLoginAt(user.getLastLoginAt())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())

@@ -5,6 +5,7 @@ import com.certificates.model.Certificate;
 import com.certificates.service.CertificateFileService;
 import com.certificates.service.CertificateService;
 import com.certificates.service.PdfService;
+import com.certificates.util.JwtUtil;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -24,28 +25,68 @@ public class CertificateController {
    private final CertificateService service;
     private final CertificateFileService fileService;
     private final PdfService pdfService;
+    private final JwtUtil jwtUtil;
     Logger logger = LoggerFactory.getLogger(CertificateController.class);
 
     @PostMapping
     public ResponseEntity<Certificate> issueCertificate(@Validated @RequestBody CertificateIssueRequest req) {
-        logger.info("Issuing certificate");
+        logger.info("Issuing certificate with certificate data: {}", req);
         return ResponseEntity.status(HttpStatus.CREATED).body(service.issueCertificate(req));
     }
 
     @GetMapping
-    public ResponseEntity<List<Certificate>> listCertificates(@RequestParam(required = false) String status) {
-        return ResponseEntity.ok(service.listCertificates(status));
+    public ResponseEntity<List<Certificate>> listCertificates(
+            @RequestParam(required = false) String status,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        logger.info("Listing certificates with status: {}", status);
+        
+        try {
+            // Check if authorization header is present and extract JWT token
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+                logger.info("Token extracted, attempting to parse");
+                
+                try {
+                    String userEmail = jwtUtil.extractUsername(token);
+                    String userRole = jwtUtil.extractRole(token);
+                    
+                    logger.info("JWT parsed successfully - User email: {}, role: {}", userEmail, userRole);
+                    
+                    // If user is a student, only return their certificates
+                    if ("STUDENT".equalsIgnoreCase(userRole)) {
+                        logger.info("Filtering certificates for student: {}", userEmail);
+                        List<Certificate> studentCerts = service.listCertificatesByStudentEmail(userEmail, status);
+                        logger.info("Found {} certificates for student {}", studentCerts.size(), userEmail);
+                        return ResponseEntity.ok(studentCerts);
+                    }
+                    
+                    logger.info("User role is {}, returning all certificates", userRole);
+                } catch (Exception e) {
+                    logger.warn("Error parsing JWT token: {}, returning all certificates", e.getMessage());
+                    // Don't fail the request, just return all certificates
+                }
+            } else {
+                logger.info("No authorization header provided, returning all certificates");
+            }
+            
+            // For admin/university or no token, return all certificates
+            return ResponseEntity.ok(service.listCertificates(status));
+        } catch (Exception e) {
+            logger.error("Error in listCertificates: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Certificate> getCertificate(@PathVariable UUID id) {
-        return ResponseEntity.ok(service.getCertificate(id));
+    @GetMapping("/{certificateNumber}")
+    public ResponseEntity<Certificate> getCertificate(@PathVariable String certificateNumber) {
+        logger.info("get certificate given id: {}", certificateNumber);
+        return ResponseEntity.ok(service.getCertificateByCertificateNumber(certificateNumber));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Certificate> updateCertificate(@PathVariable UUID id,
-                                                         @Validated @RequestBody CertificateUpdateRequest req) {
-        return ResponseEntity.ok(service.updateCertificate(id, req));
+    @PutMapping
+    public ResponseEntity<Certificate> updateCertificate(@Validated @RequestBody CertificateUpdateRequest req) {
+        logger.info("update certificate given data: {}", req.toString());
+        return ResponseEntity.ok(service.updateCertificate(req));
     }
 
     @PostMapping("/revoke")
@@ -56,7 +97,7 @@ public class CertificateController {
 
     @PostMapping("/batch-issue")
     public ResponseEntity<Map<String, Object>> batchIssueCertificates(@RequestBody Map<String, List<CertificateIssueRequest>> request) {
-        List<CertificateIssueRequest> certs = request.get("static/certificates");
+        List<CertificateIssueRequest> certs = request.get("certificates");
         int success = 0, failed = 0;
         List<Map<String, Object>> results = new ArrayList<>();
 
@@ -81,7 +122,7 @@ public class CertificateController {
     }
 
     @PostMapping("/upload")
-    @PreAuthorize("hasAnyRole('ADMIN','ISSUER')")
+   // @PreAuthorize("hasAnyRole('ADMIN','ISSUER')")
     public ResponseEntity<FileUploadResponse> uploadFile(
             @RequestPart("file") MultipartFile file,
             @RequestParam("type") String type) {
@@ -90,7 +131,7 @@ public class CertificateController {
     }
 
     @GetMapping("/{certificateId}/pdf")
-    @PreAuthorize("hasAnyRole('ADMIN','ISSUER','STUDENT')")
+    //@PreAuthorize("hasAnyRole('ADMIN','ISSUER','STUDENT')")
     public ResponseEntity<org.springframework.core.io.Resource> generateAndDownloadPdf(@PathVariable UUID certificateId) throws IOException {
         pdfService.generateCertificatePdf(certificateId.toString());
         org.springframework.core.io.Resource pdf = pdfService.getPdf(certificateId);

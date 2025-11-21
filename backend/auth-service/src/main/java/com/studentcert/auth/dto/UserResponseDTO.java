@@ -23,7 +23,8 @@ public class UserResponseDTO {
     private String phone;
     private String universityId;
     private String studentId;
-    private String employeeId;
+    private String uid;
+    private String universityUid;
     private String createdAt;
     private String updatedAt;
 
@@ -38,7 +39,8 @@ public class UserResponseDTO {
             .phone(user.getPhone())
             .universityId(user.getUniversityId())
             .studentId(user.getStudentId())
-            .employeeId(user.getEmployeeId())
+            .uid(user.getUid())
+            .universityUid(user.getUniversityUid())
             .createdAt(user.getCreatedAt() != null ? user.getCreatedAt().toString() : null)
             .updatedAt(user.getUpdatedAt() != null ? user.getUpdatedAt().toString() : null)
             .build();

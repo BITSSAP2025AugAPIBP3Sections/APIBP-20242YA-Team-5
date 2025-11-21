@@ -21,6 +21,7 @@ public class CertificateServiceImpl implements CertificateService {
         Certificate cert = Certificate.builder()
                 .certificateNumber(UUID.randomUUID().toString().substring(0, 8).toUpperCase())
                 .studentName(request.getStudentName())
+                .studentEmail(request.getStudentEmail())
                 .courseName(request.getCourseName())
                 .specialization(request.getSpecialization())
                 .grade(request.getGrade())
@@ -41,14 +42,20 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
-    public Certificate getCertificate(UUID id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Certificate not found"));
+    public List<Certificate> listCertificatesByStudentEmail(String studentEmail, String status) {
+        List<Certificate> certificates = repository.findByStudentEmail(studentEmail);
+        if (status != null && !status.isEmpty()) {
+            Status statusEnum = Status.valueOf(status.toUpperCase());
+            certificates = certificates.stream()
+                    .filter(cert -> cert.getStatus() == statusEnum)
+                    .toList();
+        }
+        return certificates;
     }
 
     @Override
-    public Certificate updateCertificate(UUID id, CertificateUpdateRequest request) {
-        Certificate cert = getCertificate(id);
+    public Certificate updateCertificate(CertificateUpdateRequest request) {
+        Certificate cert = getCertificateByCertificateNumber(request.getCertificateNumber());
         if (request.getGrade() != null) cert.setGrade(request.getGrade());
         if (request.getCgpa() != null) cert.setCgpa(request.getCgpa());
         if (request.getSpecialization() != null) cert.setSpecialization(request.getSpecialization());
@@ -56,9 +63,14 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
-    public void revokeCertificate(CertificateRevocationRequest request) {
-        Certificate cert = repository.findByCertificateNumber(request.getCertificateNumber())
+    public Certificate getCertificateByCertificateNumber(String certificateNumber) {
+        return repository.findByCertificateNumber(certificateNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Certificate not found"));
+    }
+
+    @Override
+    public void revokeCertificate(CertificateRevocationRequest request) {
+        Certificate cert = getCertificateByCertificateNumber(request.getCertificateNumber());
         cert.setStatus(Status.REVOKED);
         cert.setRevocationReason(request.getReason());
         repository.save(cert);

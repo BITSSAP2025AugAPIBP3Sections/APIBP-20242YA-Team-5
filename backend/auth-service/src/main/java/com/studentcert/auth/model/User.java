@@ -55,8 +55,11 @@ public class User implements UserDetails {
     @Column(name = "student_id", length = 50)
     private String studentId; // For student users
 
-    @Column(name = "employee_id", length = 50)
-    private String employeeId; // For employer users
+    @Column(name = "uid", unique = true, length = 50)
+    private String uid; // Auto-generated unique identifier for all users
+
+    @Column(name = "university_uid", length = 50)
+    private String universityUid; // For students - references their university's UID
 
     @Column(name = "verification_token")
     private String verificationToken;

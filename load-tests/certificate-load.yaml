@@ -1,0 +1,131 @@
+config:
+  target: "http://localhost:3003/api"
+
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: "Normal Load Test"
+
+  defaults:
+    headers:
+      Content-Type: "application/json"
+
+  processor: "./processor.js"
+
+  plugins:
+    metrics-by-endpoint:
+      enabled: true
+      matchRegex: true
+
+
+scenarios:
+
+  # =============================
+  # 1. Issue Certificate
+  # =============================
+  - name: "Issue Certificate"
+    weight: 3
+    flow:
+      - function: "beforeRequest"
+      - post:
+          url: "/certificates"
+          json:
+            studentName: "{{ studentName }}"
+            studentEmail: "{{ studentEmail }}"
+            courseName: "Computer Science"
+            specialization: "AI"
+            grade: "A"
+            cgpa: 9.2
+            issueDate: "2024-01-01"
+            completionDate: "2024-12-01"
+          afterResponse: "captureCert"
+      - think: 0.5
+
+  # =============================
+  # 2. Get All Certificates
+  # =============================
+  - name: "Get All Certificates"
+    weight: 2
+    flow:
+      - get:
+          url: "/certificates"
+      - think: 0.2
+
+  # =============================
+  # 3. Get Certificate By Number
+  # =============================
+  - name: "Get Certificate By Number"
+    weight: 3
+    flow:
+      - if:
+          condition: "{{ certCreated }}"
+          then:
+            - get:
+                url: "/certificates/{{ certificateNumber }}"
+          else:
+            - log: "Certificate not created — skipping GET by number"
+      - think: 0.2
+
+  # =============================
+  # 4. Update Certificate
+  # =============================
+  - name: "Update Certificate"
+    weight: 2
+    flow:
+      - if:
+          condition: "{{ certCreated }}"
+          then:
+            - put:
+                url: "/certificates"
+                json:
+                  certificateNumber: "{{ certificateNumber }}"
+                  grade: "A+"
+                  cgpa: 9.5
+                  specialization: "Machine Learning"
+          else:
+            - log: "Certificate not created — skipping update"
+      - think: 0.3
+
+  # =============================
+  # 5. Revoke Certificate
+  # =============================
+  - name: "Revoke Certificate"
+    weight: 1
+    flow:
+      - if:
+          condition: "{{ certCreated }}"
+          then:
+            - post:
+                url: "/certificates/revoke"
+                json:
+                  certificateNumber: "{{ certificateNumber }}"
+                  reason: "Automated load-test revocation"
+          else:
+            - log: "Certificate not created — skipping revoke"
+      - think: 0.3
+
+  # =============================
+  # 6. Batch Issue Certificates
+  # =============================
+  - name: "Batch Issue Certificates"
+    weight: 1
+    flow:
+      - post:
+          url: "/certificates/batch-issue"
+          json:
+            certificates:
+              - studentName: "Alice Batch"
+                studentEmail: "alice.batch+{{ $randomInt }}@example.com"
+                courseName: "Cybersecurity"
+                specialization: "Network Security"
+                grade: "A"
+                cgpa: 9.1
+                issueDate: "2024-02-01"
+              - studentName: "Bob Batch"
+                studentEmail: "bob.batch+{{ $randomInt }}@example.com"
+                courseName: "Data Science"
+                specialization: "Data Engineering"
+                grade: "B+"
+                cgpa: 8.3
+                issueDate: "2024-02-10"
+      - think: 0.5
