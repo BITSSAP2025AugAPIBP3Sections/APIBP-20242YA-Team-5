@@ -1,93 +1,90 @@
-# **Student Certificate Verification System**
+# Student Certificate Management System
 
-The application provides APIs for issuing and verifying student certificates using digital signatures and cryptographic verification.  
-Universities can publish certificate details securely, and employers can instantly validate authenticity without contacting the university.
+A web application for managing and verifying student certificates. Universities can issue digital certificates, students can access their records, and employers can verify certificate authenticity in real-time.
 
-## **Quick Start - API Documentation**
+## 🎯 Overview
 
-### **To view API Specification**
+This system provides a secure platform for the complete certificate lifecycle - from issuance by universities to verification by employers, eliminating manual verification processes and preventing fraud.
 
-1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+## 🛠 Tech Stack
 
-2. **Run Swagger UI:**
-   ```bash
-   npm run swagger
-   ```
+- **Backend:** Java 17+, Spring Boot 3.x, Feign Client, PostgreSQL
+- **Frontend:** React 18+, TypeScript
+- **API:** REST (HTTP), Swagger/OpenAPI 3.0
+- **Testing:** Bruno
 
-3. **Access API Documentation:**
-   - Open: **http://localhost:8080**
-   - Or directly: **http://localhost:8080/api-docs**
+## 🏗 Architecture
 
-
-### **Alternative Commands:**
-```bash
-# Same as npm run swagger
-npm run api-docs
-
-# Or run directly
-node swagger-server.js
+The application consists of 4 independent services communicating via HTTP REST APIs:
+```
+Frontend (React + TypeScript)
+         │
+    ┌────┼─────┬────────┬──────────┐
+    ▼    ▼     ▼        ▼          │
+  Auth  Univ  Cert  Verification   │
+  3001  3002  3003      3004       │
+                    │               │
+              Feign Client          │
+                    │               │
+              ┌─────┴───────────────┘
+              ▼
+          Database
 ```
 
-## **📋 API Specification File**
-The complete OpenAPI 3.0.3 specification is located at:
-- **File**: `docs/api/openapi.yaml`
-- **Format**: YAML (industry standard)
-- **Version**: OpenAPI 3.0.3
+## 🚀 Quick Start
+
+### Backend Setup
+```bash
+# Start each service in separate terminals
+cd backend/auth-service && ./mvnw spring-boot:run        # Port 3001
+cd backend/university-service && ./mvnw spring-boot:run  # Port 3002
+cd backend/certificate-service && ./mvnw spring-boot:run # Port 3003
+cd backend/verification-service && ./mvnw spring-boot:run # Port 3004
+```
+
+### Frontend Setup
+```bash
+cd frontend
+npm install
+npm start
+```
+
+## 📚 Services
+
+| Service | Port | Purpose |
+|---------|------|---------|
+| Auth Service | 3001 | User authentication & authorization |
+| University Service | 3002 | Manage university profiles |
+| Certificate Service | 3003 | Issue and manage certificates |
+| Verification Service | 3004 | Verify certificate authenticity |
+
+## API Documentation
+
+Once services are running:
+
+- **Auth:** http://localhost:3001/swagger-ui.html
+- **University:** http://localhost:3002/swagger-ui.html
+- **Certificate:** http://localhost:3003/swagger-ui.html
+- **Verification:** http://localhost:3004/swagger-ui.html
+
+## 🧪 Testing with Bruno
+
+1. **Install Bruno:** https://www.usebruno.com/
+2. **Test workflow:**
+   - Health checks → Create university → Issue certificate → Verify
+
+## 🤝 Team Members
+
+- **Sachin T P** – 93102 – [@SachinTP02](https://github.com/SachinTP02)
+- **Saher Mahtab** – 93103 – [@SaherMahtab](https://github.com/SaherMahtab)
+- **R Soujanya** – 93039 – [@reddeboinasoujanya09](https://github.com/reddeboinasoujanya09)
+- **Sanka Deekshitha** – 93043 – [@deekshitha-77](https://github.com/deekshitha-77)
+- **Anantha Krishnan G** – 93049 – [@spotananthu](https://github.com/spotananthu)
+
+## 📄 License
+
+This project is licensed under the [MIT License](./LICENSE).
 
 ---
 
-## **Backend**
-Handles business logic and communicates with the database and cryptographic services.  
-Exposes **REST and GraphQL APIs** for operations such as certificate issuance, record management, and verification.
-
-
-
-## **REST & GraphQL API**
-Acts as the bridge between frontend clients and the certificate verification layer. Supports operations like:
-
-- **User authentication & role-based access** (university, student, employer)  
-- **Certificate management** – create, update, and retrieve certificate records  
-- **Digital signature & hash generation** – compute certificate hash (e.g., SHA-256) and cryptographic signatures  
-- **Verification** – validate a certificate by ID or verification code  
-
-Clients can choose:
-- **REST endpoints** for standard HTTP requests  
-- **GraphQL queries/mutations** for flexible data fetching and combined operations  
-
-
-
-## **Core Features**
-
-### **University (Issuer)**
-- Authenticate and issue certificates  
-- Store certificate hash and digital signature in secure database  
-
-### **Student (Holder)**
-- Retrieve issued certificate details and verification information  
-
-### **Employer (Verifier)**
-- Verify certificate authenticity directly through REST or GraphQL endpoints  
-
-
-
-## **System-Wide**
-- Authentication and role-based access control  
-- Secure digital signing and cryptographic hashing  
-- Tamper-proof verification accessible via both REST and GraphQL APIs  
-
-
-
-## **Team Members**
-- **Sachin T P** – 93102 – [@SachinTP02](https://github.com/SachinTP02)  
-- **Saher Mahtab** – 93103 – [@SaherMahtab](https://github.com/SaherMahtab)  
-- **R Soujanya** – 93039 – [@reddeboinasoujanya09](https://github.com/reddeboinasoujanya09)  
-- **Sanka Deekshitha** – 93043 – [@deekshitha-77](https://github.com/deekshitha-77)  
-- **Anantha Krishnan G** – 93049 – [@spotananthu](https://github.com/spotananthu)  
-
-
-
-**License**  
-This project is licensed under the [MIT License](./LICENSE).
+**Note:** Each service has its own detailed README in their respective directories for service-specific documentation.
