@@ -26,6 +26,7 @@ import {
   MenuItem,
   Alert,
   Pagination,
+  Tooltip,
 } from '@mui/material';
 import {
   Search,
@@ -33,6 +34,8 @@ import {
   Delete,
   Download,
   FilterList,
+  CheckCircle,
+  Cancel,
 } from '@mui/icons-material';
 import { adminService } from '../services';
 import { User, PaginatedResponse } from '../types';
@@ -42,6 +45,7 @@ export const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<PaginatedResponse<User> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [page, setPage] = useState(1);
@@ -124,6 +128,29 @@ export const UserManagement: React.FC = () => {
     }
   };
 
+  const handleVerifyUser = async (userId: string, currentlyVerified: boolean) => {
+    const action = currentlyVerified ? 'unverify' : 'verify';
+    if (!window.confirm(`Are you sure you want to ${action} this user?`)) return;
+
+    try {
+      if (currentlyVerified) {
+        // Unverify by updating the user
+        await adminService.updateUser(userId, { isVerified: false });
+      } else {
+        // Verify using the dedicated endpoint
+        await adminService.verifyUser(userId);
+      }
+      // Reload users to reflect changes
+      const data = await adminService.getUsers(page, 20, searchTerm, roleFilter);
+      setUsers(data);
+      setSuccessMessage(`User ${action}ed successfully`);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || `Failed to ${action} user`);
+      setSuccessMessage(null);
+    }
+  };
+
   const handleExportUsers = async () => {
     try {
       const blob = await adminService.exportUsers('csv');
@@ -168,8 +195,14 @@ export const UserManagement: React.FC = () => {
       </Box>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
           {error}
+        </Alert>
+      )}
+
+      {successMessage && (
+        <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccessMessage(null)}>
+          {successMessage}
         </Alert>
       )}
 
@@ -261,21 +294,34 @@ export const UserManagement: React.FC = () => {
                         {format(new Date(user.createdAt), 'MMM dd, yyyy')}
                       </TableCell>
                       <TableCell>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleEditUser(user)}
-                          color="primary"
-                        >
-                          <Edit />
-                        </IconButton>
-                        {user.role !== 'ADMIN' && (
+                        <Tooltip title="Edit user">
                           <IconButton
                             size="small"
-                            onClick={() => handleDeleteUser(user.id)}
-                            color="error"
+                            onClick={() => handleEditUser(user)}
+                            color="primary"
                           >
-                            <Delete />
+                            <Edit />
                           </IconButton>
+                        </Tooltip>
+                        <Tooltip title={user.isVerified ? 'Mark as unverified' : 'Mark as verified'}>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleVerifyUser(user.id, user.isVerified)}
+                            color={user.isVerified ? 'warning' : 'success'}
+                          >
+                            {user.isVerified ? <Cancel /> : <CheckCircle />}
+                          </IconButton>
+                        </Tooltip>
+                        {user.role !== 'ADMIN' && (
+                          <Tooltip title="Delete user">
+                            <IconButton
+                              size="small"
+                              onClick={() => handleDeleteUser(user.id)}
+                              color="error"
+                            >
+                              <Delete />
+                            </IconButton>
+                          </Tooltip>
                         )}
                       </TableCell>
                     </TableRow>

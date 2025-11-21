@@ -11,6 +11,7 @@ import {
   InputAdornment,
   IconButton,
   Link,
+  Snackbar,
 } from '@mui/material';
 import {
   Email,
@@ -27,6 +28,7 @@ export const Signup: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({});
@@ -118,7 +120,14 @@ export const Signup: React.FC = () => {
         email: formData.email,
         password: formData.password
       });
-      navigate('/dashboard');
+      
+      // Show success message instead of immediate navigation
+      setSuccessMessage('Registration successful! Pending admin verification. You will be redirected to login.');
+      
+      // Redirect to login after 3 seconds
+      setTimeout(() => {
+        navigate('/login');
+      }, 3000);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -295,6 +304,20 @@ export const Signup: React.FC = () => {
           </CardContent>
         </Card>
       </Box>
+
+      {/* Success Snackbar */}
+      <Snackbar
+        open={!!successMessage}
+        autoHideDuration={6000}
+        onClose={() => setSuccessMessage(null)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setSuccessMessage(null)} severity="success" sx={{ width: '100%' }}>
+          {successMessage}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };
+
+export default Signup;
