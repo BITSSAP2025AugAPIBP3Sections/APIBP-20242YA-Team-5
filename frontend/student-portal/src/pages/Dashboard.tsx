@@ -8,15 +8,36 @@ import {
   Chip,
   Avatar,
   Divider,
+  Button,
 } from '@mui/material';
 import { 
   ArticleOutlined, 
   VerifiedOutlined, 
   DownloadOutlined,
   TrendingUpOutlined,
+  ViewList,
 } from '@mui/icons-material';
+import { useCertificates } from '../hooks/useCertificates';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
+  const { certificates, loading } = useCertificates();
+  const navigate = useNavigate();
+
+  // Ensure certificates is always an array to prevent filter errors
+  const safeCertificates = Array.isArray(certificates) ? certificates : [];
+
+  // Calculate certificate statistics
+  const totalCertificates = safeCertificates.length;
+  const activeCertificates = safeCertificates.filter(cert => cert.status === 'ACTIVE').length;
+  const pendingCertificates = safeCertificates.filter(cert => cert.status === 'PENDING').length;
+  const recentCertificates = safeCertificates
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 3);
+
+  const handleViewAllCertificates = () => {
+    navigate('/certificates');
+  };
   return (
     <Box sx={{ pt: 4 }}>
       {/* Hero Section */}
@@ -85,7 +106,7 @@ const Dashboard: React.FC = () => {
                   fontSize: '2.5rem'
                 }}
               >
-                5
+                {totalCertificates}
               </Typography>
               <Typography 
                 variant="h6" 
@@ -142,7 +163,7 @@ const Dashboard: React.FC = () => {
                   fontSize: '2.5rem'
                 }}
               >
-                5
+                {activeCertificates}
               </Typography>
               <Typography 
                 variant="h6" 
@@ -151,7 +172,7 @@ const Dashboard: React.FC = () => {
                   mb: 1
                 }}
               >
-                Verified
+                Active Certificates
               </Typography>
               <Typography 
                 variant="body2" 
@@ -199,7 +220,7 @@ const Dashboard: React.FC = () => {
                   fontSize: '2.5rem'
                 }}
               >
-                12
+                {pendingCertificates}
               </Typography>
               <Typography 
                 variant="h6" 
@@ -208,7 +229,7 @@ const Dashboard: React.FC = () => {
                   mb: 1
                 }}
               >
-                Downloads
+                Pending
               </Typography>
               <Typography 
                 variant="body2" 
@@ -312,6 +333,97 @@ const Dashboard: React.FC = () => {
           </Box>
         </CardContent>
       </Card>
+
+      {/* Recent Certificates Section */}
+      {recentCertificates.length > 0 && (
+        <Card sx={{ 
+          mt: 6, 
+          borderRadius: 3,
+          border: '1px solid #f5f3ef',
+          boxShadow: '0 4px 6px -1px rgba(120, 113, 108, 0.1)',
+        }}>
+          <CardContent sx={{ p: 4 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+              <Typography 
+                variant="h5" 
+                sx={{ 
+                  fontWeight: 600,
+                  color: '#1c1917'
+                }}
+              >
+                Recent Certificates
+              </Typography>
+              <ViewList 
+                sx={{ 
+                  color: '#6b7280', 
+                  cursor: 'pointer',
+                  '&:hover': { color: '#059669' } 
+                }}
+                onClick={handleViewAllCertificates}
+              />
+            </Box>
+            
+            <Grid container spacing={3}>
+              {recentCertificates.map((certificate, index) => (
+                <Grid item xs={12} md={4} key={certificate.certificateId}>
+                  <Card sx={{ 
+                    p: 3, 
+                    height: '100%',
+                    borderRadius: 2,
+                    border: '1px solid #f3f4f6',
+                    '&:hover': {
+                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                      transform: 'translateY(-2px)',
+                    }
+                  }}>
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                      <Avatar sx={{ 
+                        bgcolor: index === 0 ? '#dbeafe' : index === 1 ? '#dcfce7' : '#fef3c7',
+                        color: index === 0 ? '#1d4ed8' : index === 1 ? '#16a34a' : '#d97706',
+                        width: 40,
+                        height: 40,
+                      }}>
+                        <VerifiedOutlined sx={{ fontSize: 20 }} />
+                      </Avatar>
+                      <Box sx={{ flexGrow: 1 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                          {certificate.courseName}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: '#6b7280', mb: 2 }}>
+                          {certificate.studentName} • {certificate.grade}
+                        </Typography>
+                        <Chip 
+                          size="small"
+                          label={certificate.status}
+                          color={certificate.status === 'ACTIVE' ? 'success' : certificate.status === 'PENDING' ? 'warning' : 'default'}
+                          sx={{ fontWeight: 500 }}
+                        />
+                      </Box>
+                    </Box>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+            
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+              <Button 
+                variant="outlined" 
+                onClick={handleViewAllCertificates}
+                sx={{ 
+                  borderColor: '#059669',
+                  color: '#059669',
+                  '&:hover': {
+                    backgroundColor: '#059669',
+                    color: 'white',
+                  }
+                }}
+              >
+                View All Certificates
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
+      )}
     </Box>
   );
 };
