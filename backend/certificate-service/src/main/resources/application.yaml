@@ -6,8 +6,8 @@ server:
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/certificatesdb
-    username: ${DB_USERNAME:I529006}
-    password: ${DB_PASSWORD:}
+    username: myuser
+    password: mypassword
     driver-class-name: org.postgresql.Driver
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
