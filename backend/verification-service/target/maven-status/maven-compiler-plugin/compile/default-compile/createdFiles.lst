@@ -9,8 +9,6 @@ com/certverify/verification/config/RestTemplateConfig.class
 com/certverify/verification/dto/VerificationRequest.class
 com/certverify/verification/service/VerificationService.class
 com/certverify/verification/model/VerificationResult$VerificationResultBuilder.class
-com/certverify/verification/util/CryptoUtil.class
-com/certverify/verification/service/UniversityServiceClient.class
 com/certverify/verification/dto/BulkVerificationRequest.class
 com/certverify/verification/service/CertificateServiceClient.class
 com/certverify/verification/model/Certificate.class

@@ -3,7 +3,6 @@
 /Users/I578046/Documents/Bits/SEM_3/API/Assignment/APIBP-20242YA-Team-5/backend/verification-service/src/main/java/com/certverify/verification/dto/BulkVerificationRequest.java
 /Users/I578046/Documents/Bits/SEM_3/API/Assignment/APIBP-20242YA-Team-5/backend/verification-service/src/main/java/com/certverify/verification/service/CertificateServiceClient.java
 /Users/I578046/Documents/Bits/SEM_3/API/Assignment/APIBP-20242YA-Team-5/backend/verification-service/src/main/java/com/certverify/verification/service/VerificationService.java
-/Users/I578046/Documents/Bits/SEM_3/API/Assignment/APIBP-20242YA-Team-5/backend/verification-service/src/main/java/com/certverify/verification/service/UniversityServiceClient.java
 /Users/I578046/Documents/Bits/SEM_3/API/Assignment/APIBP-20242YA-Team-5/backend/verification-service/src/main/java/com/certverify/verification/dto/VerificationResponse.java
 /Users/I578046/Documents/Bits/SEM_3/API/Assignment/APIBP-20242YA-Team-5/backend/verification-service/src/main/java/com/certverify/verification/model/University.java
 /Users/I578046/Documents/Bits/SEM_3/API/Assignment/APIBP-20242YA-Team-5/backend/verification-service/src/main/java/com/certverify/verification/controller/VerificationController.java
@@ -11,5 +10,4 @@
 /Users/I578046/Documents/Bits/SEM_3/API/Assignment/APIBP-20242YA-Team-5/backend/verification-service/src/main/java/com/certverify/verification/config/RestTemplateConfig.java
 /Users/I578046/Documents/Bits/SEM_3/API/Assignment/APIBP-20242YA-Team-5/backend/verification-service/src/main/java/com/certverify/verification/controller/HealthController.java
 /Users/I578046/Documents/Bits/SEM_3/API/Assignment/APIBP-20242YA-Team-5/backend/verification-service/src/main/java/com/certverify/verification/dto/VerificationRequest.java
-/Users/I578046/Documents/Bits/SEM_3/API/Assignment/APIBP-20242YA-Team-5/backend/verification-service/src/main/java/com/certverify/verification/util/CryptoUtil.java
 /Users/I578046/Documents/Bits/SEM_3/API/Assignment/APIBP-20242YA-Team-5/backend/verification-service/src/main/java/com/certverify/verification/VerificationServiceApplication.java

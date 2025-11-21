@@ -8,7 +8,7 @@ import com.certverify.verification.service.VerificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -29,26 +29,13 @@ public class VerificationController {
     private final VerificationService verificationService;
 
     /**
-     * Verify certificate by ID or code
+     * Verify certificate by certificate number
      */
     @PostMapping
-    @Operation(summary = "Verify certificate", description = "Verify certificate by ID or verification code")
+    @Operation(summary = "Verify certificate", description = "Verify certificate by certificate number")
     public ResponseEntity<VerificationResponse> verify(@Valid @RequestBody VerificationRequest request) {
 
-        VerificationResult result;
-
-        if (request.getCertificateId() != null && !request.getCertificateId().isEmpty()) {
-            result = verificationService.verifyById(request.getCertificateId());
-        } else if (request.getVerificationCode() != null && !request.getVerificationCode().isEmpty()) {
-            result = verificationService.verifyByCode(request.getVerificationCode());
-        } else {
-            return ResponseEntity.badRequest().body(
-                    VerificationResponse.builder()
-                            .success(false)
-                            .message("Either certificateId or verificationCode must be provided")
-                            .build()
-            );
-        }
+        VerificationResult result = verificationService.verifyByCertificateNumber(request.getCertificateNumber());
 
         String message = result.getValid()
                 ? "Certificate verified successfully"
@@ -64,41 +51,14 @@ public class VerificationController {
     }
 
     /**
-     * Verify certificate by ID (GET)
+     * Verify certificate by certificate number (GET)
      */
-    @GetMapping("/{certificateId}")
-    @Operation(summary = "Verify by ID", description = "Quick verification using certificate ID")
-    public ResponseEntity<VerificationResponse> verifyById(
-            @PathVariable
-            @Pattern(regexp = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
-            String certificateId) {
+    @GetMapping("/{certificateNumber}")
+    @Operation(summary = "Verify by certificate number", description = "Quick verification using certificate number")
+    public ResponseEntity<VerificationResponse> verifyByCertificateNumber(
+            @PathVariable @NotBlank String certificateNumber) {
 
-        VerificationResult result = verificationService.verifyById(certificateId);
-
-        String message = result.getValid()
-                ? "Certificate verified successfully"
-                : "Certificate verification failed";
-
-        return ResponseEntity.ok(
-                VerificationResponse.builder()
-                        .success(true)
-                        .data(result)
-                        .message(message)
-                        .build()
-        );
-    }
-
-    /**
-     * Verify certificate by code (GET)
-     */
-    @GetMapping("/code/{verificationCode}")
-    @Operation(summary = "Verify by code", description = "Quick verification using verification code")
-    public ResponseEntity<VerificationResponse> verifyByCode(
-            @PathVariable
-            @Pattern(regexp = "^[A-Z0-9]{6,8}$")
-            String verificationCode) {
-
-        VerificationResult result = verificationService.verifyByCode(verificationCode);
+        VerificationResult result = verificationService.verifyByCertificateNumber(certificateNumber);
 
         String message = result.getValid()
                 ? "Certificate verified successfully"
@@ -126,13 +86,9 @@ public class VerificationController {
 
         for (VerificationRequest certRequest : request.getCertificates()) {
             try {
-                VerificationResult result;
-
-                if (certRequest.getCertificateId() != null) {
-                    result = verificationService.verifyById(certRequest.getCertificateId());
-                } else {
-                    result = verificationService.verifyByCode(certRequest.getVerificationCode());
-                }
+                VerificationResult result = verificationService.verifyByCertificateNumber(
+                        certRequest.getCertificateNumber()
+                );
 
                 if (result.getValid()) {
                     validCount++;
@@ -141,20 +97,25 @@ public class VerificationController {
                 }
 
                 Map<String, Object> resultMap = new HashMap<>();
-                resultMap.put("certificateId", certRequest.getCertificateId());
-                resultMap.put("verificationCode", certRequest.getVerificationCode());
+                resultMap.put("certificateNumber", certRequest.getCertificateNumber());
                 resultMap.put("valid", result.getValid());
                 resultMap.put("reason", result.getReason());
+
+                // Include certificate details if available
+                if (result.getCertificate() != null) {
+                    resultMap.put("studentName", result.getCertificate().getStudentName());
+                    resultMap.put("courseName", result.getCertificate().getCourseName());
+                    resultMap.put("issueDate", result.getCertificate().getIssueDate());
+                }
 
                 results.add(resultMap);
 
             } catch (Exception e) {
                 invalidCount++;
                 Map<String, Object> errorResult = new HashMap<>();
-                errorResult.put("certificateId", certRequest.getCertificateId());
-                errorResult.put("verificationCode", certRequest.getVerificationCode());
+                errorResult.put("certificateNumber", certRequest.getCertificateNumber());
                 errorResult.put("valid", false);
-                errorResult.put("reason", "Verification failed due to internal error");
+                errorResult.put("reason", "Verification failed due to internal error: " + e.getMessage());
                 results.add(errorResult);
             }
         }

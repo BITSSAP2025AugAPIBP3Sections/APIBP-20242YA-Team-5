@@ -24,12 +24,15 @@ management:
     web:
       exposure:
         include: health,info,metrics
-      base-path: /
+      base-path: /actuator
       path-mapping:
         health: health
   endpoint:
     health:
       show-details: always
+  health:
+    discovery:
+      enabled: false
 
 # Logging
 logging:
