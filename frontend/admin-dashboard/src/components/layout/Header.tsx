@@ -14,7 +14,6 @@ import {
   Logout,
   AccountCircle,
   Notifications,
-  Settings,
   Menu as MenuIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -56,11 +55,6 @@ export const Header: React.FC<HeaderProps> = ({ title, onMenuClick }) => {
   const handleProfile = () => {
     handleClose();
     navigate('/profile');
-  };
-
-  const handleSettings = () => {
-    handleClose();
-    navigate('/settings');
   };
 
   return (
@@ -125,10 +119,6 @@ export const Header: React.FC<HeaderProps> = ({ title, onMenuClick }) => {
             <MenuItem onClick={handleProfile}>
               <AccountCircle sx={{ mr: 2 }} />
               Profile
-            </MenuItem>
-            <MenuItem onClick={handleSettings}>
-              <Settings sx={{ mr: 2 }} />
-              Settings
             </MenuItem>
             <Divider />
             <MenuItem onClick={handleLogout}>

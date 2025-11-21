@@ -29,7 +29,19 @@ export const authService = {
       } else if (error.response?.status === 401) {
         throw new Error('Invalid email or password.');
       } else if (error.response?.status === 403) {
+        // Check if it's a verification issue or access issue
+        const message = error.response?.data?.message || '';
+        if (message.toLowerCase().includes('not verified') || message.toLowerCase().includes('verification')) {
+          throw new Error('Your account is pending verification by an administrator. Please wait for approval.');
+        }
         throw new Error('Access denied. University account required.');
+      } else if (error.response?.data?.message) {
+        // Check the backend message for verification status
+        const backendMessage = error.response.data.message;
+        if (backendMessage.toLowerCase().includes('not verified') || backendMessage.toLowerCase().includes('verification')) {
+          throw new Error('Your account is pending verification by an administrator. Please wait for approval.');
+        }
+        throw new Error(backendMessage);
       } else {
         throw new Error(error.message || 'Login failed. Please try again.');
       }

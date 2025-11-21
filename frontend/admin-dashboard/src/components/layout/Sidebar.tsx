@@ -17,10 +17,7 @@ import {
   School,
   Assignment,
   VerifiedUser,
-  Analytics,
-  Settings,
   MonitorHeart,
-  Download,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -72,25 +69,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
       divider: true,
     },
     {
-      title: 'Analytics',
-      path: '/analytics',
-      icon: <Analytics />,
-    },
-    {
       title: 'System Health',
       path: '/health',
       icon: <MonitorHeart />,
-      divider: true,
-    },
-    {
-      title: 'Export Data',
-      path: '/export',
-      icon: <Download />,
-    },
-    {
-      title: 'Settings',
-      path: '/settings',
-      icon: <Settings />,
     },
   ];
 

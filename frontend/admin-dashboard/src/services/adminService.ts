@@ -99,6 +99,21 @@ export const adminService = {
     await authApi.delete(`/admin/users/${id}`);
   },
 
+  async verifyUser(id: string): Promise<User> {
+    const response = await authApi.put<ApiResponse<User>>(`/admin/users/${id}/verify`);
+    return response.data.data;
+  },
+
+  async activateUser(id: string): Promise<User> {
+    const response = await authApi.put<ApiResponse<User>>(`/admin/users/${id}/activate`);
+    return response.data.data;
+  },
+
+  async deactivateUser(id: string): Promise<User> {
+    const response = await authApi.put<ApiResponse<User>>(`/admin/users/${id}/deactivate`);
+    return response.data.data;
+  },
+
   // University management
   async getUniversities(page = 1, limit = 20): Promise<PaginatedResponse<University>> {
     const response = await api.get<PaginatedResponse<University>>(`/universities?page=${page}&limit=${limit}`);

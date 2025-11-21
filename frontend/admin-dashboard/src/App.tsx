@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Layout } from './components/Layout';
-import { Dashboard, UserManagement, Login } from './pages';
+import { Dashboard, UserManagement, Login, UniversityManagement } from './pages';
 import { authService } from './services';
 
 const theme = createTheme({
@@ -88,10 +88,7 @@ const App: React.FC = () => {
             element={
               <ProtectedRoute>
                 <Layout title="University Management">
-                  <div style={{ padding: 32, textAlign: 'center' }}>
-                    <h2>University Management</h2>
-                    <p>Coming soon...</p>
-                  </div>
+                  <UniversityManagement />
                 </Layout>
               </ProtectedRoute>
             }
@@ -126,54 +123,12 @@ const App: React.FC = () => {
           />
 
           <Route
-            path="/analytics"
-            element={
-              <ProtectedRoute>
-                <Layout title="Analytics">
-                  <div style={{ padding: 32, textAlign: 'center' }}>
-                    <h2>Analytics</h2>
-                    <p>Coming soon...</p>
-                  </div>
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
             path="/health"
             element={
               <ProtectedRoute>
                 <Layout title="System Health">
                   <div style={{ padding: 32, textAlign: 'center' }}>
                     <h2>System Health</h2>
-                    <p>Coming soon...</p>
-                  </div>
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/export"
-            element={
-              <ProtectedRoute>
-                <Layout title="Export Data">
-                  <div style={{ padding: 32, textAlign: 'center' }}>
-                    <h2>Export Data</h2>
-                    <p>Coming soon...</p>
-                  </div>
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <Layout title="Settings">
-                  <div style={{ padding: 32, textAlign: 'center' }}>
-                    <h2>Settings</h2>
                     <p>Coming soon...</p>
                   </div>
                 </Layout>
