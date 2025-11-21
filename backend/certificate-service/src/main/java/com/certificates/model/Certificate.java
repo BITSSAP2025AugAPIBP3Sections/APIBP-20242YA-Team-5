@@ -21,6 +21,7 @@ public class Certificate {
     private UUID studentId;
     private UUID universityId;
     private String studentName;
+    private String studentEmail;
     private String courseName;
     private String specialization;
     private String grade;

@@ -5,6 +5,7 @@ import com.certificates.model.Certificate;
 import com.certificates.service.CertificateFileService;
 import com.certificates.service.CertificateService;
 import com.certificates.service.PdfService;
+import com.certificates.util.JwtUtil;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -24,6 +25,7 @@ public class CertificateController {
    private final CertificateService service;
     private final CertificateFileService fileService;
     private final PdfService pdfService;
+    private final JwtUtil jwtUtil;
     Logger logger = LoggerFactory.getLogger(CertificateController.class);
 
     @PostMapping
@@ -33,9 +35,46 @@ public class CertificateController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Certificate>> listCertificates(@RequestParam(required = false) String status) {
-        logger.info("listing certificates");
-        return ResponseEntity.ok(service.listCertificates(status));
+    public ResponseEntity<List<Certificate>> listCertificates(
+            @RequestParam(required = false) String status,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        logger.info("Listing certificates with status: {}", status);
+        
+        try {
+            // Check if authorization header is present and extract JWT token
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+                logger.info("Token extracted, attempting to parse");
+                
+                try {
+                    String userEmail = jwtUtil.extractUsername(token);
+                    String userRole = jwtUtil.extractRole(token);
+                    
+                    logger.info("JWT parsed successfully - User email: {}, role: {}", userEmail, userRole);
+                    
+                    // If user is a student, only return their certificates
+                    if ("STUDENT".equalsIgnoreCase(userRole)) {
+                        logger.info("Filtering certificates for student: {}", userEmail);
+                        List<Certificate> studentCerts = service.listCertificatesByStudentEmail(userEmail, status);
+                        logger.info("Found {} certificates for student {}", studentCerts.size(), userEmail);
+                        return ResponseEntity.ok(studentCerts);
+                    }
+                    
+                    logger.info("User role is {}, returning all certificates", userRole);
+                } catch (Exception e) {
+                    logger.warn("Error parsing JWT token: {}, returning all certificates", e.getMessage());
+                    // Don't fail the request, just return all certificates
+                }
+            } else {
+                logger.info("No authorization header provided, returning all certificates");
+            }
+            
+            // For admin/university or no token, return all certificates
+            return ResponseEntity.ok(service.listCertificates(status));
+        } catch (Exception e) {
+            logger.error("Error in listCertificates: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     @GetMapping("/{certificateNumber}")

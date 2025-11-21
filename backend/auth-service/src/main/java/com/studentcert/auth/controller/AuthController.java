@@ -4,8 +4,10 @@ import com.studentcert.auth.dto.AuthResponse;
 import com.studentcert.auth.dto.LoginRequest;
 import com.studentcert.auth.dto.RegisterRequest;
 import com.studentcert.auth.model.User;
+import com.studentcert.auth.model.UserRole;
 import com.studentcert.auth.service.AuthService;
 import com.studentcert.auth.service.JwtService;
+import com.studentcert.auth.service.UidGenerationService;
 import com.studentcert.auth.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,9 @@ public class AuthController {
     
     @Autowired
     private UserService userService;
+    
+    @Autowired
+    private UidGenerationService uidGenerationService;
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
@@ -58,18 +63,32 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest registerRequest) {
         try {
+            // Validate: Students MUST select a university UID
+            if (registerRequest.getRole() == UserRole.STUDENT && 
+                (registerRequest.getUniversityUid() == null || registerRequest.getUniversityUid().trim().isEmpty())) {
+                AuthResponse errorResponse = AuthResponse.builder()
+                    .success(false)
+                    .message("Students must select a university")
+                    .build();
+                return ResponseEntity.status(400).body(errorResponse);
+            }
+            
             User user = userService.createUser(
                 registerRequest.getEmail(), 
                 registerRequest.getPassword(), 
                 registerRequest.getRole()
             );
             
+            // Generate unique UID for the user
+            String uid = uidGenerationService.regenerateUidIfConflict(registerRequest.getRole());
+            
             // Update additional fields
             user.setFullName(registerRequest.getFullName());
             user.setPhone(registerRequest.getPhone());
             user.setUniversityId(registerRequest.getUniversityId());
             user.setStudentId(registerRequest.getStudentId());
-            user.setEmployeeId(registerRequest.getEmployeeId());
+            user.setUid(uid);
+            user.setUniversityUid(registerRequest.getUniversityUid());
             
             // Save updated user
             user = userService.updateUser(user);
@@ -78,7 +97,7 @@ public class AuthController {
             
             AuthResponse response = AuthResponse.builder()
                 .success(true)
-                .message("Registration successful")
+                .message("Registration successful. Your UID is: " + uid)
                 .data(AuthResponse.UserData.builder()
                     .id(user.getId().toString())
                     .email(user.getEmail())

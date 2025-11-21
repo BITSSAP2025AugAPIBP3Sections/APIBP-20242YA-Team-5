@@ -21,6 +21,7 @@ public class CertificateServiceImpl implements CertificateService {
         Certificate cert = Certificate.builder()
                 .certificateNumber(UUID.randomUUID().toString().substring(0, 8).toUpperCase())
                 .studentName(request.getStudentName())
+                .studentEmail(request.getStudentEmail())
                 .courseName(request.getCourseName())
                 .specialization(request.getSpecialization())
                 .grade(request.getGrade())
@@ -38,6 +39,18 @@ public class CertificateServiceImpl implements CertificateService {
     @Override
     public List<Certificate> listCertificates(String status) {
         return repository.findAll();
+    }
+
+    @Override
+    public List<Certificate> listCertificatesByStudentEmail(String studentEmail, String status) {
+        List<Certificate> certificates = repository.findByStudentEmail(studentEmail);
+        if (status != null && !status.isEmpty()) {
+            Status statusEnum = Status.valueOf(status.toUpperCase());
+            certificates = certificates.stream()
+                    .filter(cert -> cert.getStatus() == statusEnum)
+                    .toList();
+        }
+        return certificates;
     }
 
     @Override

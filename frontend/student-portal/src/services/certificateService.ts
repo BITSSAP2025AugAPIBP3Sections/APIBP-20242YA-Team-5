@@ -2,7 +2,7 @@ import axios, { AxiosResponse, AxiosError } from 'axios';
 import { Certificate, CertificateIssueRequest, CertificateUpdateRequest, CertificateRevocationRequest, FileUploadResponse } from '../types/certificate';
 
 // API Base URL - should be configured via environment variables
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3003/api';
 const CERTIFICATE_API_URL = `${API_BASE_URL}/certificates`;
 
 // Create axios instance with common configuration
@@ -17,7 +17,7 @@ const apiClient = axios.create({
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('student_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -34,7 +34,8 @@ apiClient.interceptors.response.use(
   (error: AxiosError) => {
     if (error.response?.status === 401) {
       // Handle unauthorized access
-      localStorage.removeItem('authToken');
+      localStorage.removeItem('student_token');
+      localStorage.removeItem('student_user');
       window.location.href = '/login';
     }
     return Promise.reject(error);
@@ -48,7 +49,7 @@ export class CertificateService {
   static async getCertificates(status?: string): Promise<Certificate[]> {
     try {
       const params = status ? { status } : {};
-      const response: AxiosResponse<Certificate[]> = await apiClient.get('/', { params });
+      const response: AxiosResponse<Certificate[]> = await apiClient.get('', { params });
       return response.data;
     } catch (error) {
       console.error('Error fetching certificates:', error);

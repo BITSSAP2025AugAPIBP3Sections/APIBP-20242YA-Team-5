@@ -8,7 +8,8 @@ export interface User {
   phone?: string;
   universityId?: string;
   studentId?: string;
-  employeeId?: string;
+  uid?: string;
+  universityUid?: string;
   lastLoginAt?: string;
   createdAt: string;
   updatedAt?: string;

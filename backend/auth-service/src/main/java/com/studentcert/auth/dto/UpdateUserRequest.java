@@ -18,5 +18,5 @@ public class UpdateUserRequest {
     private Boolean isActive;
     private String universityId;
     private String studentId;
-    private String employeeId;
+    private String universityUid;
 }

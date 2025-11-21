@@ -22,7 +22,8 @@ public class UserDto {
     private String phone;
     private String universityId;
     private String studentId;
-    private String employeeId;
+    private String uid;
+    private String universityUid;
     private LocalDateTime lastLoginAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

@@ -36,5 +36,5 @@ public class RegisterRequest {
     // Role-specific fields
     private String universityId; // For university admin users
     private String studentId;    // For student users
-    private String employeeId;   // For employer users
+    private String universityUid; // For students - must select university UID during registration
 }
