@@ -28,24 +28,26 @@ public class CertificateController {
 
     @PostMapping
     public ResponseEntity<Certificate> issueCertificate(@Validated @RequestBody CertificateIssueRequest req) {
-        logger.info("Issuing certificate");
+        logger.info("Issuing certificate with certificate data: {}", req);
         return ResponseEntity.status(HttpStatus.CREATED).body(service.issueCertificate(req));
     }
 
     @GetMapping
     public ResponseEntity<List<Certificate>> listCertificates(@RequestParam(required = false) String status) {
+        logger.info("listing certificates");
         return ResponseEntity.ok(service.listCertificates(status));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Certificate> getCertificate(@PathVariable UUID id) {
-        return ResponseEntity.ok(service.getCertificate(id));
+    @GetMapping("/{certificateNumber}")
+    public ResponseEntity<Certificate> getCertificate(@PathVariable String certificateNumber) {
+        logger.info("get certificate given id: {}", certificateNumber);
+        return ResponseEntity.ok(service.getCertificateByCertificateNumber(certificateNumber));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Certificate> updateCertificate(@PathVariable UUID id,
-                                                         @Validated @RequestBody CertificateUpdateRequest req) {
-        return ResponseEntity.ok(service.updateCertificate(id, req));
+    @PutMapping
+    public ResponseEntity<Certificate> updateCertificate(@Validated @RequestBody CertificateUpdateRequest req) {
+        logger.info("update certificate given data: {}", req.toString());
+        return ResponseEntity.ok(service.updateCertificate(req));
     }
 
     @PostMapping("/revoke")
@@ -56,7 +58,7 @@ public class CertificateController {
 
     @PostMapping("/batch-issue")
     public ResponseEntity<Map<String, Object>> batchIssueCertificates(@RequestBody Map<String, List<CertificateIssueRequest>> request) {
-        List<CertificateIssueRequest> certs = request.get("static/certificates");
+        List<CertificateIssueRequest> certs = request.get("certificates");
         int success = 0, failed = 0;
         List<Map<String, Object>> results = new ArrayList<>();
 
@@ -81,7 +83,7 @@ public class CertificateController {
     }
 
     @PostMapping("/upload")
-    @PreAuthorize("hasAnyRole('ADMIN','ISSUER')")
+   // @PreAuthorize("hasAnyRole('ADMIN','ISSUER')")
     public ResponseEntity<FileUploadResponse> uploadFile(
             @RequestPart("file") MultipartFile file,
             @RequestParam("type") String type) {
@@ -90,7 +92,7 @@ public class CertificateController {
     }
 
     @GetMapping("/{certificateId}/pdf")
-    @PreAuthorize("hasAnyRole('ADMIN','ISSUER','STUDENT')")
+    //@PreAuthorize("hasAnyRole('ADMIN','ISSUER','STUDENT')")
     public ResponseEntity<org.springframework.core.io.Resource> generateAndDownloadPdf(@PathVariable UUID certificateId) throws IOException {
         pdfService.generateCertificatePdf(certificateId.toString());
         org.springframework.core.io.Resource pdf = pdfService.getPdf(certificateId);
