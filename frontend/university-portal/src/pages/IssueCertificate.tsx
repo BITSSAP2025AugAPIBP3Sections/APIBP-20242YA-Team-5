@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Typography,
@@ -12,6 +12,8 @@ import {
   Card,
   CardContent,
   IconButton,
+  Autocomplete,
+  CircularProgress,
 } from '@mui/material';
 import {
   AddCircleOutline,
@@ -21,12 +23,22 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { CertificateService } from '../services/certificateService';
 import { CertificateIssueRequest } from '../types';
+import { authApi } from '../services/api';
+
+interface Student {
+  id: string;
+  email: string;
+  fullName: string;
+}
 
 const IssueCertificate: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [loadingStudents, setLoadingStudents] = useState(true);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   
   const [formData, setFormData] = useState<CertificateIssueRequest>({
     studentName: '',
@@ -38,6 +50,79 @@ const IssueCertificate: React.FC = () => {
     issueDate: new Date().toISOString().split('T')[0], // Today's date
     completionDate: '',
   });
+
+  // Fetch registered students on component mount
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        setLoadingStudents(true);
+        
+        // Debug: Check if token exists
+        const token = localStorage.getItem('university_token');
+        console.log('University token exists:', !!token);
+        if (token) {
+          console.log('Token preview:', token.substring(0, 20) + '...');
+        } else {
+          console.error('No authentication token found! User may not be logged in.');
+          setError('Authentication error. Please log out and log in again.');
+          setLoadingStudents(false);
+          return;
+        }
+        
+        // Fetch students with STUDENT role from auth service
+        console.log('Fetching students from:', authApi.defaults.baseURL + '/users');
+        const response = await authApi.get('/users', {
+          params: {
+            page: 0,
+            size: 1000, // Fetch all students
+            role: 'STUDENT'
+          }
+        });
+        
+        console.log('API Response:', response.data);
+        
+        if (response.data && response.data.content) {
+          console.log('Found students (paginated):', response.data.content.length);
+          setStudents(response.data.content);
+        } else if (response.data && Array.isArray(response.data)) {
+          console.log('Found students (array):', response.data.length);
+          setStudents(response.data);
+        } else {
+          console.log('No students found in response');
+          setStudents([]);
+        }
+      } catch (err: any) {
+        console.error('Failed to fetch students:', err);
+        console.error('Error response:', err.response?.data);
+        console.error('Error status:', err.response?.status);
+        
+        // Don't show error if it's just access denied - students can be entered manually
+        if (err.response?.status === 403) {
+          setError('Access denied. You may not have permission to view student list. Please enter student details manually.');
+        } else if (err.response?.status === 401) {
+          setError('Authentication failed. Please log out and log in again.');
+        } else if (err.response?.status !== 403 && err.response?.status !== 401) {
+          setError('Failed to load registered students. You can still enter student details manually.');
+        }
+      } finally {
+        setLoadingStudents(false);
+      }
+    };
+
+    fetchStudents();
+  }, []);
+
+  // Handle student selection from dropdown
+  const handleStudentSelect = (event: any, value: Student | null) => {
+    setSelectedStudent(value);
+    if (value) {
+      setFormData(prev => ({
+        ...prev,
+        studentEmail: value.email,
+        studentName: value.fullName,
+      }));
+    }
+  };
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
@@ -97,6 +182,7 @@ const IssueCertificate: React.FC = () => {
       setSuccess('Certificate issued successfully!');
       
       // Reset form
+      setSelectedStudent(null);
       setFormData({
         studentName: '',
         studentEmail: '',
@@ -135,29 +221,63 @@ const IssueCertificate: React.FC = () => {
                 Certificate Details
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Fill in the required information to issue a new certificate
+                Select a registered student and fill in the certificate information
               </Typography>
             </Box>
           </Box>
 
           <Divider sx={{ mb: 3 }} />
 
+          {!loadingStudents && students.length === 0 && (
+            <Alert severity="warning" sx={{ mb: 3 }}>
+              <strong>No registered students found.</strong>
+              <br />
+              Please ensure students have registered in the system. If students have registered but you still see this message, please try refreshing the page or contact the administrator.
+            </Alert>
+          )}
+
           <form onSubmit={handleSubmit}>
             <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Student Email"
-                  name="studentEmail"
-                  type="email"
-                  value={formData.studentEmail}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="e.g., student@university.edu"
+              <Grid item xs={12}>
+                <Autocomplete
+                  options={students}
+                  getOptionLabel={(option) => `${option.email} - ${option.fullName}`}
+                  value={selectedStudent}
+                  onChange={handleStudentSelect}
+                  loading={loadingStudents}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Select Student Email"
+                      placeholder="Search by email or name..."
+                      required
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {loadingStudents ? <CircularProgress color="inherit" size={20} /> : null}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
+                  renderOption={(props, option) => (
+                    <li {...props} key={option.id}>
+                      <Box>
+                        <Typography variant="body2" fontWeight={600}>
+                          {option.email}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {option.fullName}
+                        </Typography>
+                      </Box>
+                    </li>
+                  )}
                 />
               </Grid>
               
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12}>
                 <TextField
                   fullWidth
                   label="Student Name"
@@ -165,7 +285,10 @@ const IssueCertificate: React.FC = () => {
                   value={formData.studentName}
                   onChange={handleInputChange}
                   required
-                  placeholder="e.g., John Doe"
+                  placeholder="Auto-filled from selected student"
+                  InputProps={{
+                    readOnly: !!selectedStudent,
+                  }}
                 />
               </Grid>
               
