@@ -137,6 +137,13 @@ Integration test commands:
 mvn verify
 ```
 
+Load testing commands:
+
+```bash
+artillery run certificate-load.yml -o report.json && artillery report report.json
+```
+- A report.json.html file will be generated, check and validate metrics.
+
 ---
 
 ## **Deployment**

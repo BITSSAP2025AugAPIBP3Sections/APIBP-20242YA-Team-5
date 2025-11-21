@@ -41,14 +41,8 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
-    public Certificate getCertificate(UUID id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Certificate not found"));
-    }
-
-    @Override
-    public Certificate updateCertificate(UUID id, CertificateUpdateRequest request) {
-        Certificate cert = getCertificate(id);
+    public Certificate updateCertificate(CertificateUpdateRequest request) {
+        Certificate cert = getCertificateByCertificateNumber(request.getCertificateNumber());
         if (request.getGrade() != null) cert.setGrade(request.getGrade());
         if (request.getCgpa() != null) cert.setCgpa(request.getCgpa());
         if (request.getSpecialization() != null) cert.setSpecialization(request.getSpecialization());
@@ -56,9 +50,14 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
-    public void revokeCertificate(CertificateRevocationRequest request) {
-        Certificate cert = repository.findByCertificateNumber(request.getCertificateNumber())
+    public Certificate getCertificateByCertificateNumber(String certificateNumber) {
+        return repository.findByCertificateNumber(certificateNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Certificate not found"));
+    }
+
+    @Override
+    public void revokeCertificate(CertificateRevocationRequest request) {
+        Certificate cert = getCertificateByCertificateNumber(request.getCertificateNumber());
         cert.setStatus(Status.REVOKED);
         cert.setRevocationReason(request.getReason());
         repository.save(cert);
