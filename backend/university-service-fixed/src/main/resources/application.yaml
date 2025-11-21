@@ -42,5 +42,5 @@ management:
       show-details: when_authorized
 
 papertrail:
-  host: ${PAPERTRAIL_HOST:syslog.collector.ap-01.cloud.solarwinds.com}
-  port: ${PAPERTRAIL_PORT:6514}
+  endpoint: "https://logs.collector.ap-01.cloud.solarwinds.com/v1/logs"
+  token: "TYi9-9QRQgoeE0ThX7PqE-N_RQ21vjeEIbH42mxDKnjtffuVnb6AZJu4KDUvkjRb_08nIi4"
