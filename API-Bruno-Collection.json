@@ -1,0 +1,757 @@
+{
+  "name": "API-Project",
+  "version": "1",
+  "items": [
+    {
+      "type": "folder",
+      "name": "auth-service",
+      "items": [
+        {
+          "type": "folder",
+          "name": "admin-related",
+          "items": [
+            {
+              "type": "http",
+              "name": "get admin users details",
+              "seq": 1,
+              "request": {
+                "url": "http://localhost:8081/api/admin/users",
+                "method": "GET",
+                "headers": [],
+                "params": [],
+                "body": {
+                  "mode": "none",
+                  "formUrlEncoded": [],
+                  "multipartForm": []
+                },
+                "script": {},
+                "vars": {},
+                "assertions": [],
+                "tests": "",
+                "auth": {
+                  "mode": "none"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "http",
+      "name": "JWT",
+      "seq": 2,
+      "request": {
+        "url": "http://localhost:8081/api/auth/login",
+        "method": "GET",
+        "headers": [],
+        "params": [],
+        "body": {
+          "mode": "none",
+          "formUrlEncoded": [],
+          "multipartForm": []
+        },
+        "script": {},
+        "vars": {},
+        "assertions": [],
+        "tests": "",
+        "auth": {
+          "mode": "none"
+        }
+      }
+    },
+    {
+      "type": "folder",
+      "name": "certificate-service",
+      "items": [
+        {
+          "type": "folder",
+          "name": "issue-certificate",
+          "items": [
+            {
+              "type": "http",
+              "name": "issue-certificate",
+              "seq": 1,
+              "request": {
+                "url": "http://localhost:3003/api/certificates",
+                "method": "POST",
+                "headers": [],
+                "params": [],
+                "body": {
+                  "mode": "json",
+                  "json": "\n  {\n  \"studentName\": \"John Doe\",\n  \"studentEmail\": \"john.doe@example.com\",\n  \"courseName\": \"Bachelor of Computer Science\",\n  \"specialization\": \"Artificial Intelligence\",\n  \"grade\": \"A+\",\n  \"cgpa\": 9.2,\n  \"issueDate\": \"2025-11-20\",\n  \"completionDate\": \"2025-10-15\"\n}\n\n",
+                  "formUrlEncoded": [],
+                  "multipartForm": []
+                },
+                "script": {},
+                "vars": {},
+                "assertions": [],
+                "tests": "",
+                "auth": {
+                  "mode": "none"
+                }
+              }
+            },
+            {
+              "type": "http",
+              "name": "issue-certificate-wrong-email",
+              "seq": 2,
+              "request": {
+                "url": "http://localhost:3003/api/certificates",
+                "method": "POST",
+                "headers": [],
+                "params": [],
+                "body": {
+                  "mode": "json",
+                  "json": "\n  {\n  \"studentName\": \"John Doe\",\n  \"studentEmail\": \"john.doe@com\",\n  \"courseName\": \"Bachelor of Computer Science\",\n  \"specialization\": \"Artificial Intelligence\",\n  \"grade\": \"A+\",\n  \"cgpa\": 9.2,\n  \"issueDate\": \"2025-11-20\",\n  \"completionDate\": \"2025-10-15\"\n}\n\n",
+                  "formUrlEncoded": [],
+                  "multipartForm": []
+                },
+                "script": {},
+                "vars": {},
+                "assertions": [],
+                "tests": "",
+                "auth": {
+                  "mode": "none"
+                }
+              }
+            },
+            {
+              "type": "http",
+              "name": "issue-certificate-Missing Required Fields",
+              "seq": 3,
+              "request": {
+                "url": "http://localhost:3003/api/certificates",
+                "method": "POST",
+                "headers": [],
+                "params": [],
+                "body": {
+                  "mode": "json",
+                  "json": "\n  {\n  \"studentName\": \"John Doe\",\n  \"studentEmail\": \"john.doe@example.com\",\n  \"specialization\": \"Artificial Intelligence\",\n  \"grade\": \"A+\",\n  \"cgpa\": 9.2,\n  \"issueDate\": \"2025-11-20\",\n  \"completionDate\": \"2025-10-15\"\n}\n\n",
+                  "formUrlEncoded": [],
+                  "multipartForm": []
+                },
+                "script": {},
+                "vars": {},
+                "assertions": [],
+                "tests": "",
+                "auth": {
+                  "mode": "none"
+                }
+              }
+            },
+            {
+              "type": "http",
+              "name": "issue-certificate-cgpa-outofrange",
+              "seq": 4,
+              "request": {
+                "url": "http://localhost:3003/api/certificates",
+                "method": "POST",
+                "headers": [],
+                "params": [],
+                "body": {
+                  "mode": "json",
+                  "json": "\n  {\n  \"studentName\": \"John Doe\",\n  \"studentEmail\": \"john.doe@example.com\",\n  \"courseName\": \"Bachelor of Computer Science\",\n  \"specialization\": \"Artificial Intelligence\",\n  \"grade\": \"A+\",\n  \"cgpa\": 12,\n  \"issueDate\": \"2025-11-20\",\n  \"completionDate\": \"2025-10-15\"\n}\n\n",
+                  "formUrlEncoded": [],
+                  "multipartForm": []
+                },
+                "script": {},
+                "vars": {},
+                "assertions": [],
+                "tests": "",
+                "auth": {
+                  "mode": "none"
+                }
+              }
+            },
+            {
+              "type": "http",
+              "name": "issue-certificate-date-format",
+              "seq": 5,
+              "request": {
+                "url": "http://localhost:3003/api/certificates",
+                "method": "POST",
+                "headers": [],
+                "params": [],
+                "body": {
+                  "mode": "json",
+                  "json": "\n  {\n  \"studentName\": \"John Doe\",\n  \"studentEmail\": \"john.doe@example.com\",\n  \"courseName\": \"Bachelor of Computer Science\",\n  \"specialization\": \"Artificial Intelligence\",\n  \"grade\": \"A+\",\n  \"cgpa\": 9.2,\n  \"issueDate\": \"20-11-8787\",\n  \"completionDate\": \"2025-10-15\"\n}\n\n",
+                  "formUrlEncoded": [],
+                  "multipartForm": []
+                },
+                "script": {},
+                "vars": {},
+                "assertions": [],
+                "tests": "",
+                "auth": {
+                  "mode": "none"
+                }
+              }
+            },
+            {
+              "type": "http",
+              "name": "issue-certificate-completedate_and_issuedate",
+              "seq": 6,
+              "request": {
+                "url": "http://localhost:3003/api/certificates",
+                "method": "POST",
+                "headers": [],
+                "params": [],
+                "body": {
+                  "mode": "json",
+                  "json": "\n  {\n  \"studentName\": \"John Doe\",\n  \"studentEmail\": \"john.doe@example.com\",\n  \"courseName\": \"Bachelor of Computer Science\",\n  \"specialization\": \"Artificial Intelligence\",\n  \"grade\": \"A+\",\n  \"cgpa\": 9.2,\n  \"issueDate\": \"2025-01-20\",\n  \"completionDate\": \"2025-10-15\"\n}\n\n",
+                  "formUrlEncoded": [],
+                  "multipartForm": []
+                },
+                "script": {},
+                "vars": {},
+                "assertions": [],
+                "tests": "",
+                "auth": {
+                  "mode": "none"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "folder",
+          "name": "list-certificate",
+          "items": [
+            {
+              "type": "http",
+              "name": "list Certificate-valid",
+              "seq": 1,
+              "request": {
+                "url": "http://localhost:3003/api/certificates",
+                "method": "GET",
+                "headers": [],
+                "params": [],
+                "body": {
+                  "mode": "json",
+                  "json": "\n  ",
+                  "formUrlEncoded": [],
+                  "multipartForm": []
+                },
+                "script": {},
+                "vars": {},
+                "assertions": [],
+                "tests": "",
+                "auth": {
+                  "mode": "none"
+                }
+              }
+            },
+            {
+              "type": "http",
+              "name": "list Certificate-filtering",
+              "seq": 2,
+              "request": {
+                "url": "http://localhost:3003/api/certificates?status=ACTIVE",
+                "method": "GET",
+                "headers": [],
+                "params": [
+                  {
+                    "name": "status",
+                    "value": "ACTIVE",
+                    "type": "query",
+                    "enabled": true
+                  }
+                ],
+                "body": {
+                  "mode": "json",
+                  "json": "\n  ",
+                  "formUrlEncoded": [],
+                  "multipartForm": []
+                },
+                "script": {},
+                "vars": {},
+                "assertions": [],
+                "tests": "",
+                "auth": {
+                  "mode": "none"
+                }
+              }
+            },
+            {
+              "type": "http",
+              "name": "get Certificate by ID-valid",
+              "seq": 3,
+              "request": {
+                "url": "http://localhost:3003/api/certificates/80B2E175",
+                "method": "GET",
+                "headers": [],
+                "params": [],
+                "body": {
+                  "mode": "json",
+                  "json": "\n  ",
+                  "formUrlEncoded": [],
+                  "multipartForm": []
+                },
+                "script": {},
+                "vars": {},
+                "assertions": [],
+                "tests": "",
+                "auth": {
+                  "mode": "none"
+                }
+              }
+            },
+            {
+              "type": "http",
+              "name": "get Certificate by ID-invalid",
+              "seq": 4,
+              "request": {
+                "url": "http://localhost:3003/api/certificates/CERT_80B2E175",
+                "method": "GET",
+                "headers": [],
+                "params": [],
+                "body": {
+                  "mode": "json",
+                  "json": "\n  ",
+                  "formUrlEncoded": [],
+                  "multipartForm": []
+                },
+                "script": {},
+                "vars": {},
+                "assertions": [],
+                "tests": "",
+                "auth": {
+                  "mode": "none"
+                }
+              }
+            },
+            {
+              "type": "http",
+              "name": "get Certificate by ID-blank",
+              "seq": 5,
+              "request": {
+                "url": "http://localhost:3003/api/certificates/",
+                "method": "GET",
+                "headers": [],
+                "params": [],
+                "body": {
+                  "mode": "json",
+                  "json": "\n  ",
+                  "formUrlEncoded": [],
+                  "multipartForm": []
+                },
+                "script": {},
+                "vars": {},
+                "assertions": [],
+                "tests": "",
+                "auth": {
+                  "mode": "none"
+                }
+              }
+            },
+            {
+              "type": "http",
+              "name": "get Certificate by ID-trailing",
+              "seq": 6,
+              "request": {
+                "url": "http://localhost:3003/api/certificates/ 80B2E175",
+                "method": "GET",
+                "headers": [],
+                "params": [],
+                "body": {
+                  "mode": "json",
+                  "json": "\n  ",
+                  "formUrlEncoded": [],
+                  "multipartForm": []
+                },
+                "script": {},
+                "vars": {},
+                "assertions": [],
+                "tests": "",
+                "auth": {
+                  "mode": "none"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "folder",
+          "name": "update-certificate",
+          "items": [
+            {
+              "type": "http",
+              "name": "update-cert-valid",
+              "seq": 1,
+              "request": {
+                "url": "http://localhost:3003/api/certificates",
+                "method": "PUT",
+                "headers": [],
+                "params": [],
+                "body": {
+                  "mode": "json",
+                  "json": "\n  {\n  \"certificateNumber\": \"80B2E175\",\n  \"grade\": \"A+\",\n  \"cgpa\": 9.4,\n  \"specialization\": \"Machine Learning\"\n}\n",
+                  "formUrlEncoded": [],
+                  "multipartForm": []
+                },
+                "script": {},
+                "vars": {},
+                "assertions": [],
+                "tests": "",
+                "auth": {
+                  "mode": "none"
+                }
+              }
+            },
+            {
+              "type": "http",
+              "name": "update-cert-req-empty",
+              "seq": 2,
+              "request": {
+                "url": "http://localhost:3003/api/certificates",
+                "method": "PUT",
+                "headers": [],
+                "params": [],
+                "body": {
+                  "mode": "json",
+                  "json": "\n  {\n  \"certificateNumber\": \"80B2E175\"\n}\n",
+                  "formUrlEncoded": [],
+                  "multipartForm": []
+                },
+                "script": {},
+                "vars": {},
+                "assertions": [],
+                "tests": "",
+                "auth": {
+                  "mode": "none"
+                }
+              }
+            },
+            {
+              "type": "http",
+              "name": "update-cert-req-empty-2",
+              "seq": 3,
+              "request": {
+                "url": "http://localhost:3003/api/certificates",
+                "method": "PUT",
+                "headers": [],
+                "params": [],
+                "body": {
+                  "mode": "json",
+                  "json": "",
+                  "formUrlEncoded": [],
+                  "multipartForm": []
+                },
+                "script": {},
+                "vars": {},
+                "assertions": [],
+                "tests": "",
+                "auth": {
+                  "mode": "none"
+                }
+              }
+            },
+            {
+              "type": "http",
+              "name": "update-cert-invalid-",
+              "seq": 4,
+              "request": {
+                "url": "http://localhost:3003/api/certificates",
+                "method": "PUT",
+                "headers": [],
+                "params": [],
+                "body": {
+                  "mode": "json",
+                  "json": "\n  {\n  \"certificateNumber\": \"80B2E175\",\n  \"grade\": \"A+\",\n  \"cgpa\": 9.4,\n  \"specialization\": \"Machine Learning\"\n}\n",
+                  "formUrlEncoded": [],
+                  "multipartForm": []
+                },
+                "script": {},
+                "vars": {},
+                "assertions": [],
+                "tests": "",
+                "auth": {
+                  "mode": "none"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "folder",
+          "name": "batch-issue",
+          "items": [
+            {
+              "type": "http",
+              "name": "batch-issue-certificate",
+              "seq": 1,
+              "request": {
+                "url": "http://localhost:3003/api/certificates/batch-issue",
+                "method": "POST",
+                "headers": [],
+                "params": [],
+                "body": {
+                  "mode": "json",
+                  "json": "{\n  \"certificates\": [\n    {\n      \"studentName\": \"John Doe\",\n      \"studentEmail\": \"john.doe@example.com\",\n      \"courseName\": \"Bachelor of Computer Science\",\n      \"specialization\": \"Artificial Intelligence\",\n      \"grade\": \"A+\",\n      \"cgpa\": 9.2,\n      \"issueDate\": \"2025-11-20\",\n      \"completionDate\": \"2025-10-15\"\n    },\n    {\n      \"studentName\": \"Jane Smith\",\n      \"studentEmail\": \"jane.smith@example.com\",\n      \"courseName\": \"Master of Business Administration\",\n      \"specialization\": \"Finance\",\n      \"grade\": \"A\",\n      \"cgpa\": 8.7,\n      \"issueDate\": \"2025-11-21\",\n      \"completionDate\": \"2025-10-20\"\n    }\n  ]\n}\n",
+                  "formUrlEncoded": [],
+                  "multipartForm": []
+                },
+                "script": {},
+                "vars": {},
+                "assertions": [],
+                "tests": "",
+                "auth": {
+                  "mode": "none"
+                }
+              }
+            },
+            {
+              "type": "http",
+              "name": "batch-issue-certificate-minimal-req",
+              "seq": 2,
+              "request": {
+                "url": "http://localhost:3003/api/certificates/batch-issue",
+                "method": "POST",
+                "headers": [],
+                "params": [],
+                "body": {
+                  "mode": "json",
+                  "json": "{\n  \"certificates\": [\n    {\n      \"studentName\": \"Alice\",\n      \"studentEmail\": \"alice@example.com\",\n      \"courseName\": \"B.Tech\",\n      \"grade\": \"A\",\n      \"cgpa\": 8.5,\n      \"issueDate\": \"2025-11-21\"\n    }\n  ]\n}\n",
+                  "formUrlEncoded": [],
+                  "multipartForm": []
+                },
+                "script": {},
+                "vars": {},
+                "assertions": [],
+                "tests": "",
+                "auth": {
+                  "mode": "none"
+                }
+              }
+            },
+            {
+              "type": "http",
+              "name": "batch-issue-certificate-empty",
+              "seq": 3,
+              "request": {
+                "url": "http://localhost:3003/api/certificates/batch-issue",
+                "method": "POST",
+                "headers": [],
+                "params": [],
+                "body": {
+                  "mode": "json",
+                  "json": "{\n  \"certificates\": []\n}\n",
+                  "formUrlEncoded": [],
+                  "multipartForm": []
+                },
+                "script": {},
+                "vars": {},
+                "assertions": [],
+                "tests": "",
+                "auth": {
+                  "mode": "none"
+                }
+              }
+            },
+            {
+              "type": "http",
+              "name": "batch-issue-certificate-invalid",
+              "seq": 4,
+              "request": {
+                "url": "http://localhost:3003/api/certificates/batch-issue",
+                "method": "POST",
+                "headers": [],
+                "params": [],
+                "body": {
+                  "mode": "json",
+                  "json": "{\n  \"certificates\": [\n    {\n      \"studentName\": \"John\",\n      \"studentEmail\": \"john@example.com\",\n      \"courseName\": \"B.Tech\",\n      \"grade\": \"A\",\n      \"cgpa\": 9.0,\n      \"issueDate\": \"2025-11-21\"\n    },\n    {\n      \"studentName\": \"\",\n      \"studentEmail\": \"invalid-email\",\n      \"courseName\": \"\",\n      \"grade\": \"\",\n      \"cgpa\": 15,\n      \"issueDate\": \"\"\n    }\n  ]\n}\n",
+                  "formUrlEncoded": [],
+                  "multipartForm": []
+                },
+                "script": {},
+                "vars": {},
+                "assertions": [],
+                "tests": "",
+                "auth": {
+                  "mode": "none"
+                }
+              }
+            },
+            {
+              "type": "http",
+              "name": "batch-issue-certificate-all-onvalid",
+              "seq": 5,
+              "request": {
+                "url": "http://localhost:3003/api/certificates/batch-issue",
+                "method": "POST",
+                "headers": [],
+                "params": [],
+                "body": {
+                  "mode": "json",
+                  "json": "{\n  \"certificates\": [\n    {\n      \"studentName\": \"\",\n      \"studentEmail\": \"john@example.com\",\n      \"courseName\": \"\",\n      \"grade\": \"A\",\n      \"cgpa\": 9.0,\n      \"issueDate\": \"2025-11-21\"\n    },\n    {\n      \"studentName\": \"\",\n      \"studentEmail\": \"invalid-email\",\n      \"courseName\": \"\",\n      \"grade\": \"\",\n      \"cgpa\": 15,\n      \"issueDate\": \"\"\n    }\n  ]\n}\n",
+                  "formUrlEncoded": [],
+                  "multipartForm": []
+                },
+                "script": {},
+                "vars": {},
+                "assertions": [],
+                "tests": "",
+                "auth": {
+                  "mode": "none"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "folder",
+          "name": "PDF",
+          "items": [
+            {
+              "type": "http",
+              "name": "pdf-valid",
+              "seq": 1,
+              "request": {
+                "url": "http://localhost:3003/api/certificates/dffc591f-3a12-43c2-a45a-24b8bbdd79b7/pdf",
+                "method": "GET",
+                "headers": [],
+                "params": [],
+                "body": {
+                  "mode": "json",
+                  "json": "\n  ",
+                  "formUrlEncoded": [],
+                  "multipartForm": []
+                },
+                "script": {},
+                "vars": {},
+                "assertions": [],
+                "tests": "",
+                "auth": {
+                  "mode": "none"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "folder",
+      "name": "uiversity service",
+      "items": [
+        {
+          "type": "folder",
+          "name": "add-univerisity",
+          "items": [
+            {
+              "type": "http",
+              "name": "add-university",
+              "seq": 1,
+              "request": {
+                "url": "http://localhost:3002/api/universities",
+                "method": "POST",
+                "headers": [],
+                "params": [],
+                "body": {
+                  "mode": "json",
+                  "json": "{\n  \"universityName\": \"Springfield University\",\n  \"email\": \"contact@springfield.edu\",\n  \"address\": \"742 Evergreen Terrace, Springfield\",\n  \"phone\": \"+1-555-1234\"\n}\n",
+                  "formUrlEncoded": [],
+                  "multipartForm": []
+                },
+                "script": {},
+                "vars": {},
+                "assertions": [],
+                "tests": "",
+                "auth": {
+                  "mode": "none"
+                }
+              }
+            },
+            {
+              "type": "http",
+              "name": "add-university-invalid",
+              "seq": 2,
+              "request": {
+                "url": "http://localhost:3002/api/universities",
+                "method": "POST",
+                "headers": [],
+                "params": [],
+                "body": {
+                  "mode": "json",
+                  "json": "{\n  \"email\": \"contact@springfield.edu\",\n  \"address\": \"742 Evergreen Terrace, Springfield\",\n  \"phone\": \"+1-555-1234\"\n}\n",
+                  "formUrlEncoded": [],
+                  "multipartForm": []
+                },
+                "script": {},
+                "vars": {},
+                "assertions": [],
+                "tests": "",
+                "auth": {
+                  "mode": "none"
+                }
+              }
+            },
+            {
+              "type": "http",
+              "name": "add-university-balnkReqfeild",
+              "seq": 3,
+              "request": {
+                "url": "http://localhost:3002/api/universities",
+                "method": "POST",
+                "headers": [],
+                "params": [],
+                "body": {
+                  "mode": "json",
+                  "json": "{\n  \"universityName\": \"\",\n  \"email\": \"contact@springfield.edu\",\n  \"address\": \"742 Evergreen Terrace, Springfield\",\n  \"phone\": \"+1-555-1234\"\n}\n",
+                  "formUrlEncoded": [],
+                  "multipartForm": []
+                },
+                "script": {},
+                "vars": {},
+                "assertions": [],
+                "tests": "",
+                "auth": {
+                  "mode": "none"
+                }
+              }
+            },
+            {
+              "type": "http",
+              "name": "add-university-invalid-email",
+              "seq": 4,
+              "request": {
+                "url": "http://localhost:3002/api/universities",
+                "method": "POST",
+                "headers": [],
+                "params": [],
+                "body": {
+                  "mode": "json",
+                  "json": "{\n  \"universityName\": \"Springfield University\",\n  \"email\": \"contact@.edu\",\n  \"address\": \"742 Evergreen Terrace, Springfield\",\n  \"phone\": \"+1-555-1234\"\n}\n",
+                  "formUrlEncoded": [],
+                  "multipartForm": []
+                },
+                "script": {},
+                "vars": {},
+                "assertions": [],
+                "tests": "",
+                "auth": {
+                  "mode": "none"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "folder",
+          "name": "listing universities"
+        }
+      ]
+    }
+  ],
+  "environments": [],
+  "brunoConfig": {
+    "version": "1",
+    "name": "API-Project",
+    "type": "collection",
+    "ignore": [
+      "node_modules",
+      ".git"
+    ]
+  }
+}
