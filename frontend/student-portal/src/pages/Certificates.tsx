@@ -51,7 +51,7 @@ const Certificates: React.FC = () => {
       setSnackbarMessage('Certificate downloaded successfully!');
       setSnackbarOpen(true);
     } catch (error) {
-      setSnackbarMessage('Failed to download certificate. Please try again.');
+      setSnackbarMessage('Failed to download the certificate. Please try again.');
       setSnackbarOpen(true);
     }
   };
