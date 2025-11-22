@@ -47,7 +47,7 @@ public class AdminUserController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<UserDto>> getUserById(@PathVariable Long id) {
-        UserDto user = adminUserService.getUserById(id);
+        UserDto user = adminUserService.getUserById(id);  
         
         ApiResponse<UserDto> response = ApiResponse.<UserDto>builder()
                 .success(true)
