@@ -72,7 +72,7 @@ curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
 
 ## **Response Format**
 
-All API responses follow a consistent format:
+All API responses follow a consistent format :
 
 ### **Success Response**
 ```json
@@ -135,12 +135,12 @@ curl -X GET http://localhost:3000/api/verify/CERT-12345
 
 ## **Security Considerations**
 
-1. **Always use HTTPS** in production
-2. **Validate JWT tokens** on every request
-3. **Implement rate limiting** to prevent abuse
-4. **Log all verification requests** for audit trails
-5. **Use strong passwords** for user accounts
-6. **Regularly rotate signing keys** for universities
+1. **Always use HTTPS** in production 
+2. **Validate JWT tokens** on every request 
+3. **Implement rate limiting** to prevent abuse 
+4. **Log all verification requests** for audit trails 
+5. **Use strong passwords** for user accounts 
+6. **Regularly rotate signing keys** for universities 
 
 ## **Support**
 
