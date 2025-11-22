@@ -5,17 +5,18 @@ import com.certificates.model.Certificate;
 import com.certificates.service.CertificateFileService;
 import com.certificates.service.CertificateService;
 import com.certificates.service.PdfService;
+import jakarta.validation.Valid;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/certificates")
@@ -27,7 +28,7 @@ public class CertificateController {
     Logger logger = LoggerFactory.getLogger(CertificateController.class);
 
     @PostMapping
-    public ResponseEntity<Certificate> issueCertificate(@Validated @RequestBody CertificateIssueRequest req) {
+    public ResponseEntity<Certificate> issueCertificate(@Valid @RequestBody CertificateIssueRequest req) {
         logger.info("Issuing certificate with certificate data: {}", req);
         return ResponseEntity.status(HttpStatus.CREATED).body(service.issueCertificate(req));
     }
@@ -39,8 +40,15 @@ public class CertificateController {
     }
 
     @GetMapping("/{certificateNumber}")
-    public ResponseEntity<Certificate> getCertificate(@PathVariable String certificateNumber) {
-        logger.info("get certificate given id: {}", certificateNumber);
+    public ResponseEntity<?> getCertificate(@PathVariable String certificateNumber) {
+
+        if (certificateNumber == null || certificateNumber.trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Certificate number is required");
+        }
+
+        certificateNumber = certificateNumber.trim();
+
         return ResponseEntity.ok(service.getCertificateByCertificateNumber(certificateNumber));
     }
 
@@ -57,12 +65,37 @@ public class CertificateController {
     }
 
     @PostMapping("/batch-issue")
-    public ResponseEntity<Map<String, Object>> batchIssueCertificates(@RequestBody Map<String, List<CertificateIssueRequest>> request) {
+    public ResponseEntity<?> batchIssueCertificates(
+            @RequestBody Map<String, List<CertificateIssueRequest>> request) {
+
         List<CertificateIssueRequest> certs = request.get("certificates");
+        if(certs == null || certs.isEmpty()){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "No certificates provided for batch issuance");
+        }
         int success = 0, failed = 0;
+
         List<Map<String, Object>> results = new ArrayList<>();
 
-        for (var req : certs) {
+        for (CertificateIssueRequest req : certs) {
+
+            // BASIC MANDATORY VALIDATION
+            if (req.getStudentName() == null || req.getStudentName().isBlank() ||
+                    req.getStudentEmail() == null || req.getStudentEmail().isBlank() ||
+                    req.getCourseName() == null || req.getCourseName().isBlank() ||
+                    req.getGrade() == null || req.getGrade().isBlank() ||
+                    req.getIssueDate() == null ||
+                    req.getCgpa() == null) {
+
+                failed++;
+                results.add(Map.of(
+                        "success", false,
+                        "certificate", req,
+                        "error", "Mandatory fields missing"
+                ));
+                continue;
+            }
+
             try {
                 Certificate cert = service.issueCertificate(req);
                 success++;
@@ -73,14 +106,20 @@ public class CertificateController {
             }
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(Map.of("success", true, "data",
-                        Map.of("totalRequested", certs.size(),
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                Map.of(
+                        "success", true,
+                        "data", Map.of(
+                                "totalRequested", certs.size(),
                                 "successfullyIssued", success,
                                 "failed", failed,
-                                "results", results),
-                        "message", "Batch issuance completed"));
+                                "results", results
+                        ),
+                        "message", "Batch issuance completed"
+                )
+        );
     }
+
 
     @PostMapping("/upload")
    // @PreAuthorize("hasAnyRole('ADMIN','ISSUER')")

@@ -5,7 +5,7 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5434/universitiesdb
+    url: jdbc:postgresql://localhost:5432/universitiesdb
     username: sa
     password: admin
     driver-class-name: org.postgresql.Driver
