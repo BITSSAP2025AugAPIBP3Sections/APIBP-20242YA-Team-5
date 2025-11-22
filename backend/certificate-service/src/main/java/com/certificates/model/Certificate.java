@@ -1,6 +1,8 @@
 package com.certificates.model;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
+import java.util.Date;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -26,8 +28,8 @@ public class Certificate {
     private String specialization;
     private String grade;
     private Double cgpa;
-    private String issueDate;
-    private String completionDate;
+    private LocalDate issueDate;
+    private LocalDate completionDate;
     private String certificateHash;
     private String digitalSignature;
     private String verificationCode;

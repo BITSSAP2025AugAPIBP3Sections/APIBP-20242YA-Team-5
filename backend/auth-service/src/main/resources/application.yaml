@@ -8,8 +8,8 @@ spring:
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/studentcert_auth
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:password}
+    username: sa
+    password: admin
     
   jpa:
     hibernate:
