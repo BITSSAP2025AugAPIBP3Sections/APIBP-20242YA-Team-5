@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   TextField,
@@ -12,6 +12,11 @@ import {
   IconButton,
   Link,
   Snackbar,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Select,
+  CircularProgress,
 } from '@mui/material';
 import {
   Email,
@@ -23,10 +28,19 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services';
+import axios from 'axios';
+
+interface University {
+  uid: string;
+  name: string;
+  email: string;
+}
 
 export const Signup: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [loadingUniversities, setLoadingUniversities] = useState(true);
+  const [universities, setUniversities] = useState<University[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -36,10 +50,28 @@ export const Signup: React.FC = () => {
     fullName: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    universityUid: ''
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Fetch universities on component mount
+  useEffect(() => {
+    const fetchUniversities = async () => {
+      try {
+        const response = await axios.get<University[]>('http://localhost:8081/api/users/universities');
+        setUniversities(response.data);
+      } catch (err) {
+        console.error('Failed to fetch universities:', err);
+        setError('Failed to load universities. Please try again later.');
+      } finally {
+        setLoadingUniversities(false);
+      }
+    };
+
+    fetchUniversities();
+  }, []);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement> | any) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -91,6 +123,12 @@ export const Signup: React.FC = () => {
       setLoading(false);
       return;
     }
+    
+    if (!formData.universityUid.trim()) {
+      setError('Please select your university');
+      setLoading(false);
+      return;
+    }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -115,14 +153,16 @@ export const Signup: React.FC = () => {
     }
 
     try {
-      await authService.signup({
+      const response = await authService.signup({
         fullName: formData.fullName,
         email: formData.email,
-        password: formData.password
+        password: formData.password,
+        universityUid: formData.universityUid
       });
       
-      // Show success message instead of immediate navigation
-      setSuccessMessage('Registration successful! Pending admin verification. You will be redirected to login.');
+      // Show success message with UID
+      const successMsg = response?.message || 'Registration successful! Pending admin verification.';
+      setSuccessMessage(successMsg + ' You will be redirected to login.');
       
       // Redirect to login after 3 seconds
       setTimeout(() => {
@@ -210,6 +250,35 @@ export const Signup: React.FC = () => {
                   ),
                 }}
               />
+
+              <FormControl fullWidth margin="normal" required disabled={loading || loadingUniversities}>
+                <InputLabel>Select Your University</InputLabel>
+                <Select
+                  name="universityUid"
+                  value={formData.universityUid}
+                  onChange={handleInputChange}
+                  label="Select Your University"
+                  startAdornment={
+                    <InputAdornment position="start">
+                      <School />
+                    </InputAdornment>
+                  }
+                >
+                  {loadingUniversities ? (
+                    <MenuItem value="">
+                      <CircularProgress size={20} sx={{ mr: 1 }} /> Loading universities...
+                    </MenuItem>
+                  ) : universities.length === 0 ? (
+                    <MenuItem value="">No universities available</MenuItem>
+                  ) : (
+                    universities.map((uni) => (
+                      <MenuItem key={uni.uid} value={uni.uid}>
+                        {uni.name} ({uni.uid})
+                      </MenuItem>
+                    ))
+                  )}
+                </Select>
+              </FormControl>
 
               <TextField
                 fullWidth

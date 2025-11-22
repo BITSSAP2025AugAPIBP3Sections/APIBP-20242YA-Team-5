@@ -1,5 +1,5 @@
 import { authApi } from './api';
-import { LoginRequest, SignupRequest, AuthUser, ApiResponse } from '../types';
+import { LoginRequest, SignupRequest, AuthUser, ApiResponse, AuthResponse } from '../types';
 
 export const authService = {
   async login(credentials: LoginRequest): Promise<AuthUser> {
@@ -48,7 +48,7 @@ export const authService = {
     }
   },
 
-  async signup(signupData: SignupRequest): Promise<AuthUser> {
+  async signup(signupData: SignupRequest): Promise<ApiResponse<AuthUser>> {
     try {
       // Add student role to signup data
       const signupPayload = {
@@ -68,7 +68,7 @@ export const authService = {
       localStorage.setItem('student_token', userData.token);
       localStorage.setItem('student_user', JSON.stringify(userData));
       
-      return userData;
+      return response.data;
     } catch (error: any) {
       // Handle specific error cases
       if (error.code === 'ERR_NETWORK' || error.code === 'ECONNREFUSED') {

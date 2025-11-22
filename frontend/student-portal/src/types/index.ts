@@ -11,6 +11,7 @@ export interface SignupRequest {
   email: string;
   password: string;
   fullName: string;
+  universityUid?: string;
 }
 
 export interface AuthUser {
@@ -19,6 +20,12 @@ export interface AuthUser {
   fullName: string;
   role: string;
   token: string;
+}
+
+export interface AuthResponse {
+  success: boolean;
+  message?: string;
+  data?: AuthUser;
 }
 
 // API Response wrapper

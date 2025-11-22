@@ -45,6 +45,7 @@ public class AuthResponse {
         private Boolean isVerified;
         private String universityId;
         private String studentId;
-        private String employeeId;
+        private String uid;
+        private String universityUid;
     }
 }

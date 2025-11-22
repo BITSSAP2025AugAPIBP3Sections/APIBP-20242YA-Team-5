@@ -28,4 +28,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Page<User> findByEmailContainingIgnoreCaseAndRole(String email, UserRole role, Pageable pageable);
     Page<User> findByEmailContainingIgnoreCase(String email, Pageable pageable);
     Page<User> findByRole(UserRole role, Pageable pageable);
+    
+    // Non-paginated method for fetching all users of a specific role
+    @Query("SELECT u FROM User u WHERE u.role = :role")
+    java.util.List<User> findAllByRole(@Param("role") UserRole role);
+    
+    // UID-related methods
+    boolean existsByUid(String uid);
+    
+    @Query("SELECT COUNT(u) FROM User u WHERE u.uid LIKE :pattern")
+    long countByUidStartingWith(@Param("pattern") String pattern);
+    
+    Optional<User> findByUid(String uid);
 }
