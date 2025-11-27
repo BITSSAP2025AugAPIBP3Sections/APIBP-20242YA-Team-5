@@ -20,9 +20,6 @@ public class UserResponseDTO {
     private String role;
     private Boolean isVerified;
     private Boolean isActive;
-    private String phone;
-    private String universityId;
-    private String studentId;
     private String uid;
     private String universityUid;
     private String createdAt;
@@ -36,9 +33,6 @@ public class UserResponseDTO {
             .role(user.getRole().toString().toLowerCase())
             .isVerified(user.getIsVerified())
             .isActive(user.getIsActive())
-            .phone(user.getPhone())
-            .universityId(user.getUniversityId())
-            .studentId(user.getStudentId())
             .uid(user.getUid())
             .universityUid(user.getUniversityUid())
             .createdAt(user.getCreatedAt() != null ? user.getCreatedAt().toString() : null)

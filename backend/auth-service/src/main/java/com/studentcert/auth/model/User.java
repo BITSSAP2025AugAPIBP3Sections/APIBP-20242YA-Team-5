@@ -46,15 +46,6 @@ public class User implements UserDetails {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
-    @Column(name = "phone", length = 20)
-    private String phone;
-
-    @Column(name = "university_id")
-    private String universityId; // For university admin users
-
-    @Column(name = "student_id", length = 50)
-    private String studentId; // For student users
-
     @Column(name = "uid", unique = true, length = 50)
     private String uid; // Auto-generated unique identifier for all users
 
@@ -72,9 +63,6 @@ public class User implements UserDetails {
 
     @Column(name = "password_reset_token_expires_at")
     private LocalDateTime passwordResetTokenExpiresAt;
-
-    @Column(name = "last_login_at")
-    private LocalDateTime lastLoginAt;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

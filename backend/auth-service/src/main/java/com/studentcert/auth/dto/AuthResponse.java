@@ -43,8 +43,6 @@ public class AuthResponse {
         private String fullName;
         private UserRole role;
         private Boolean isVerified;
-        private String universityId;
-        private String studentId;
         private String uid;
         private String universityUid;
     }

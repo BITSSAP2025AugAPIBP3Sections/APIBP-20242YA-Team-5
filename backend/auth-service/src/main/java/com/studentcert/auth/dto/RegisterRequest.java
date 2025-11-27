@@ -31,10 +31,11 @@ public class RegisterRequest {
     @NotNull(message = "Role is required")
     private UserRole role;
     
-    private String phone;
-    
     // Role-specific fields
-    private String universityId; // For university admin users
-    private String studentId;    // For student users
     private String universityUid; // For students - must select university UID during registration
+    
+    // University-specific fields (required when role=UNIVERSITY)
+    private String universityName;
+    private String universityAddress;
+    private String universityPhone;
 }

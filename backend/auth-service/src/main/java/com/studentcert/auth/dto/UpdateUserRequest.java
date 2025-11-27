@@ -12,11 +12,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UpdateUserRequest {
     private String fullName;
-    private String phone;
     private UserRole role;
     private Boolean isVerified;
     private Boolean isActive;
-    private String universityId;
-    private String studentId;
     private String universityUid;
 }
