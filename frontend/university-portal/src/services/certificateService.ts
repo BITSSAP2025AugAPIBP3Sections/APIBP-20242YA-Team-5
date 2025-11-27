@@ -120,10 +120,13 @@ export class CertificateService {
    */
   static async revokeCertificate(request: CertificateRevocationRequest): Promise<string> {
     try {
+      console.log('CertificateService.revokeCertificate called with:', request);
       const response: AxiosResponse<string> = await certificateApi.post('/certificates/revoke', request);
+      console.log('Revoke response:', response);
       return response.data;
-    } catch (error) {
-      console.error('Error revoking certificate:', error);
+    } catch (error: any) {
+      console.error('Error revoking certificate in service:', error);
+      console.error('Error details:', error.response?.data);
       throw error;
     }
   }
@@ -191,7 +194,6 @@ export class CertificateService {
       const totalCertificatesIssued = certificates.length;
       const activeCertificates = certificates.filter(cert => cert.status === 'ACTIVE').length;
       const revokedCertificates = certificates.filter(cert => cert.status === 'REVOKED').length;
-      const pendingCertificates = certificates.filter(cert => cert.status === 'PENDING').length;
       
       // Get recent certificates (last 5)
       const recentCertificates = certificates
@@ -202,7 +204,6 @@ export class CertificateService {
         totalCertificatesIssued,
         activeCertificates,
         revokedCertificates,
-        pendingCertificates,
         recentCertificates,
         totalStudents: new Set(certificates.map(cert => cert.studentId)).size, // Unique students
       };

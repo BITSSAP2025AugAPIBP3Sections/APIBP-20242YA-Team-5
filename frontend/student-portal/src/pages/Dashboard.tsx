@@ -30,7 +30,7 @@ const Dashboard: React.FC = () => {
   // Calculate certificate statistics
   const totalCertificates = safeCertificates.length;
   const activeCertificates = safeCertificates.filter(cert => cert.status === 'ACTIVE').length;
-  const pendingCertificates = safeCertificates.filter(cert => cert.status === 'PENDING').length;
+  const revokedCertificates = safeCertificates.filter(cert => cert.status === 'REVOKED').length;
   const recentCertificates = safeCertificates
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 3);
@@ -220,7 +220,7 @@ const Dashboard: React.FC = () => {
                   fontSize: '2.5rem'
                 }}
               >
-                {pendingCertificates}
+                {revokedCertificates}
               </Typography>
               <Typography 
                 variant="h6" 
@@ -229,7 +229,7 @@ const Dashboard: React.FC = () => {
                   mb: 1
                 }}
               >
-                Pending
+                Revoked
               </Typography>
               <Typography 
                 variant="body2" 
@@ -237,7 +237,7 @@ const Dashboard: React.FC = () => {
                   fontSize: '0.875rem'
                 }}
               >
-                Total downloads this month
+                Certificates revoked
               </Typography>
             </CardContent>
           </Card>
@@ -395,7 +395,7 @@ const Dashboard: React.FC = () => {
                         <Chip 
                           size="small"
                           label={certificate.status}
-                          color={certificate.status === 'ACTIVE' ? 'success' : certificate.status === 'PENDING' ? 'warning' : 'default'}
+                          color={certificate.status === 'ACTIVE' ? 'success' : 'error'}
                           sx={{ fontWeight: 500 }}
                         />
                       </Box>

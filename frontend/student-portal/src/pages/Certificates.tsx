@@ -4,11 +4,9 @@ import {
   Grid,
   Card,
   CardContent,
-  CardActions,
   Button,
   Box,
   Chip,
-  Avatar,
   Divider,
   Alert,
   CircularProgress,
@@ -18,23 +16,38 @@ import {
   MenuItem,
   Snackbar,
   IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Tooltip,
 } from '@mui/material';
 import { 
   Download, 
-  Visibility, 
   SchoolOutlined, 
   WorkspacePremiumOutlined,
   VerifiedOutlined,
   Refresh,
-  Cancel
+  Cancel,
+  VerifiedUser,
+  Share,
+  ContentCopy,
+  CheckCircle,
 } from '@mui/icons-material';
 import { useCertificates } from '../hooks/useCertificates';
+import { VerificationService, VerificationResult } from '../services/verificationService';
 
 const Certificates: React.FC = () => {
   const { certificates, loading, error, fetchCertificates, downloadCertificate, refreshCertificates } = useCertificates();
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  
+  // Verification state
+  const [verifyDialog, setVerifyDialog] = useState(false);
+  const [selectedCertificate, setSelectedCertificate] = useState<any>(null);
+  const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
+  const [verifying, setVerifying] = useState(false);
 
   // Ensure certificates is always an array to prevent runtime errors
   const safeCertificates = Array.isArray(certificates) ? certificates : [];
@@ -56,10 +69,69 @@ const Certificates: React.FC = () => {
     }
   };
 
-  const handleView = (certificate: any) => {
-    // TODO: Open modal or navigate to detailed certificate view
-    setSnackbarMessage(`Viewing certificate: ${certificate.certificateNumber}`);
+  const handleVerifyCertificate = async (certificate: any) => {
+    setSelectedCertificate(certificate);
+    try {
+      setVerifying(true);
+      const result = await VerificationService.verifyCertificate(certificate.certificateNumber);
+      setVerificationResult(result);
+      setVerifyDialog(true);
+    } catch (error: any) {
+      setSnackbarMessage(error.message || 'Failed to verify certificate');
+      setSnackbarOpen(true);
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleCopyVerificationLink = (certificateNumber: string) => {
+    const link = VerificationService.generateVerificationLink(certificateNumber);
+    navigator.clipboard.writeText(link);
+    setSnackbarMessage('Verification link copied to clipboard!');
     setSnackbarOpen(true);
+  };
+
+  const handleShareCertificate = (certificateNumber: string) => {
+    const link = VerificationService.generateVerificationLink(certificateNumber);
+    if (navigator.share) {
+      navigator.share({
+        title: 'Certificate Verification',
+        text: 'Verify my certificate',
+        url: link,
+      }).catch(() => {
+        handleCopyVerificationLink(certificateNumber);
+      });
+    } else {
+      handleCopyVerificationLink(certificateNumber);
+    }
+  };
+
+  // Helper function to format timestamp from backend
+  const formatVerificationTimestamp = (timestamp: string | number[]): string => {
+    try {
+      if (Array.isArray(timestamp)) {
+        const [year, month, day, hour, minute, second] = timestamp;
+        const date = new Date(year, month - 1, day, hour, minute, second);
+        return date.toLocaleString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+      }
+      return new Date(timestamp).toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+    } catch (e) {
+      return new Date().toLocaleString();
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -68,10 +140,6 @@ const Certificates: React.FC = () => {
         return 'success';
       case 'REVOKED':
         return 'error';
-      case 'PENDING':
-        return 'warning';
-      case 'EXPIRED':
-        return 'default';
       default:
         return 'default';
     }
@@ -130,9 +198,7 @@ const Certificates: React.FC = () => {
             >
               <MenuItem value="">All Certificates</MenuItem>
               <MenuItem value="ACTIVE">Active</MenuItem>
-              <MenuItem value="PENDING">Pending</MenuItem>
               <MenuItem value="REVOKED">Revoked</MenuItem>
-              <MenuItem value="EXPIRED">Expired</MenuItem>
             </Select>
           </FormControl>
         </Box>
@@ -173,211 +239,464 @@ const Certificates: React.FC = () => {
       )}
 
       {!loading && !error && safeCertificates.length > 0 && (
-        <Grid container spacing={3}>
+        <Grid container spacing={4}>
           {safeCertificates.map((certificate) => (
             <Grid item xs={12} key={certificate.certificateId}>
               <Card 
                 sx={{
-                  display: 'flex',
-                  flexDirection: 'row',
                   position: 'relative',
-                  background: 'linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%)',
-                  border: '8px solid',
-                  borderImage: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%) 1',
-                  boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
-                  transition: 'all 0.3s ease-in-out',
-                  minHeight: '300px',
+                  background: '#ffffff',
+                  border: 'none',
+                  borderRadius: '16px',
+                  overflow: 'hidden',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                   '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: '0 20px 50px rgba(0, 0, 0, 0.15)',
+                    transform: 'translateY(-8px)',
+                    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.12)',
                   },
                   '&::before': {
                     content: '""',
                     position: 'absolute',
-                    top: '20px',
-                    left: '20px',
-                    right: '20px',
-                    bottom: '20px',
-                    border: '2px solid #e0e0e0',
-                    borderRadius: '4px',
-                    pointerEvents: 'none',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '6px',
+                    background: certificate.status === 'ACTIVE' 
+                      ? 'linear-gradient(90deg, #10b981 0%, #059669 100%)'
+                      : 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)',
                   }
                 }}
               >
-                {/* Left Section - Logo and Certificate Number */}
+                {/* Status Badge - Top Right */}
                 <Box sx={{ 
-                  display: 'flex', 
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  p: 4,
-                  minWidth: 250,
-                  borderRight: '2px solid #e0e0e0',
-                  position: 'relative',
-                  zIndex: 1,
+                  position: 'absolute',
+                  top: 24,
+                  right: 24,
+                  zIndex: 2,
                 }}>
-                  <Avatar 
+                  <Chip 
+                    size="small"
+                    label={certificate.status}
+                    color={getStatusColor(certificate.status) as any}
+                    icon={certificate.status === 'ACTIVE' ? <VerifiedOutlined /> : <Cancel />}
                     sx={{ 
-                      width: 100,
-                      height: 100,
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                      mb: 2,
-                    }}
-                  >
-                    <WorkspacePremiumOutlined sx={{ fontSize: 56 }} />
-                  </Avatar>
-                  <Typography 
-                    variant="h6" 
-                    sx={{ 
-                      fontWeight: 700,
-                      color: '#1c1917',
-                      fontFamily: '"Playfair Display", Georgia, serif',
-                      textAlign: 'center',
-                      mb: 1,
-                    }}
-                  >
-                    Certificate
-                  </Typography>
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      color: '#6b7280',
                       fontWeight: 600,
-                      textAlign: 'center',
-                      mb: 2,
+                      fontSize: '0.75rem',
+                      height: '28px',
+                      borderRadius: '14px',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                     }}
-                  >
-                    of Achievement
-                  </Typography>
-                  <Divider sx={{ width: '80%', mb: 2 }} />
-                  <Typography variant="caption" sx={{ color: '#6b7280', textTransform: 'uppercase', letterSpacing: 1 }}>
-                    No. {certificate.certificateNumber}
-                  </Typography>
-                  <Box sx={{ mt: 2 }}>
-                    <Chip 
-                      size="small"
-                      label={certificate.status}
-                      color={getStatusColor(certificate.status) as any}
-                      icon={certificate.status === 'ACTIVE' ? <VerifiedOutlined /> : <Cancel />}
-                      sx={{ fontWeight: 600 }}
-                    />
-                  </Box>
+                  />
                 </Box>
 
-                {/* Middle Section - Certificate Content */}
-                <CardContent sx={{ flexGrow: 1, p: 4, position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                  <Box sx={{ textAlign: 'center', mb: 3 }}>
-                    <Typography variant="body2" sx={{ color: '#6b7280', mb: 1, fontStyle: 'italic' }}>
-                      This is to certify that
-                    </Typography>
+                {/* Main Content Container */}
+                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, width: '100%' }}>
+                  
+                  {/* Left Section - Decorative Icon & Certificate Number */}
+                  <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    p: 4,
+                    minWidth: { xs: '100%', md: 200 },
+                    background: 'linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)',
+                    borderRight: { xs: 'none', md: '1px solid #e5e7eb' },
+                    borderBottom: { xs: '1px solid #e5e7eb', md: 'none' },
+                  }}>
+                    <Box sx={{
+                      width: 80,
+                      height: 80,
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mb: 2,
+                      boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+                    }}>
+                      <WorkspacePremiumOutlined sx={{ fontSize: 40, color: '#ffffff' }} />
+                    </Box>
                     <Typography 
-                      variant="h4" 
+                      variant="caption" 
                       sx={{ 
-                        fontWeight: 700,
-                        color: '#1c1917',
-                        mb: 2,
-                        fontFamily: '"Playfair Display", Georgia, serif',
+                        color: '#6b7280',
+                        textTransform: 'uppercase',
+                        letterSpacing: 1.5,
+                        fontWeight: 600,
+                        fontSize: '0.65rem',
                       }}
                     >
-                      {certificate.studentName}
+                      Certificate No.
                     </Typography>
-                    <Typography variant="body2" sx={{ color: '#6b7280', mb: 1, fontStyle: 'italic' }}>
-                      has successfully completed
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        color: '#1f2937',
+                        fontWeight: 700,
+                        fontSize: '0.9rem',
+                        mt: 0.5,
+                      }}
+                    >
+                      {certificate.certificateNumber}
+                    </Typography>
+                  </Box>
+
+                  {/* Middle Section - Certificate Details */}
+                  <CardContent sx={{ 
+                    flexGrow: 1, 
+                    p: { xs: 3, md: 4 },
+                    display: 'flex', 
+                    flexDirection: 'column',
+                  }}>
+                    {/* Student Name */}
+                    <Typography 
+                      variant="caption" 
+                      sx={{ 
+                        color: '#9ca3af',
+                        textTransform: 'uppercase',
+                        letterSpacing: 1.2,
+                        fontWeight: 600,
+                        fontSize: '0.7rem',
+                        mb: 0.5,
+                      }}
+                    >
+                      Awarded To
                     </Typography>
                     <Typography 
                       variant="h5" 
                       sx={{ 
-                        fontWeight: 600,
-                        color: '#059669',
-                        mb: 1,
+                        fontWeight: 700,
+                        color: '#111827',
+                        mb: 3,
+                        fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                        letterSpacing: '-0.02em',
                       }}
                     >
-                      {certificate.courseName}
+                      {certificate.studentName}
                     </Typography>
-                    {certificate.specialization && (
-                      <Typography variant="body1" sx={{ color: '#6b7280', fontStyle: 'italic', mt: 1 }}>
-                        Specialization: {certificate.specialization}
-                      </Typography>
-                    )}
-                  </Box>
 
-                  <Divider sx={{ my: 2 }} />
-
-                  {/* Details in Row */}
-                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, flexWrap: 'wrap' }}>
-                    <Box sx={{ textAlign: 'center' }}>
-                      <Typography variant="caption" sx={{ color: '#6b7280', display: 'block', mb: 0.5 }}>
-                        Grade
+                    {/* Course Information */}
+                    <Box sx={{ mb: 3 }}>
+                      <Typography 
+                        variant="caption" 
+                        sx={{ 
+                          color: '#9ca3af',
+                          textTransform: 'uppercase',
+                          letterSpacing: 1.2,
+                          fontWeight: 600,
+                          fontSize: '0.7rem',
+                          mb: 0.5,
+                          display: 'block',
+                        }}
+                      >
+                        Course Completed
                       </Typography>
-                      <Typography variant="h6" sx={{ color: '#059669', fontWeight: 700 }}>
-                        {certificate.grade}
-                        {certificate.cgpa && ` (${certificate.cgpa})`}
+                      <Typography 
+                        variant="h6" 
+                        sx={{ 
+                          fontWeight: 600,
+                          color: '#059669',
+                          mb: 0.5,
+                          lineHeight: 1.3,
+                        }}
+                      >
+                        {certificate.courseName}
                       </Typography>
+                      {certificate.specialization && (
+                        <Typography 
+                          variant="body2" 
+                          sx={{ 
+                            color: '#6b7280',
+                            fontWeight: 500,
+                            mt: 0.5,
+                          }}
+                        >
+                          {certificate.specialization}
+                        </Typography>
+                      )}
                     </Box>
-                    <Divider orientation="vertical" flexItem />
-                    <Box sx={{ textAlign: 'center' }}>
-                      <Typography variant="caption" sx={{ color: '#6b7280', display: 'block', mb: 0.5 }}>
-                        Issue Date
-                      </Typography>
-                      <Typography variant="body1" sx={{ color: '#1c1917', fontWeight: 600 }}>
-                        {formatDate(certificate.issueDate)}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
 
-                {/* Right Section - Actions */}
-                <Box sx={{ 
-                  display: 'flex', 
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  p: 3,
-                  minWidth: 150,
-                  borderLeft: '2px solid #e0e0e0',
-                  gap: 2,
-                  position: 'relative',
-                  zIndex: 1,
-                }}>
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    startIcon={<Visibility />}
-                    onClick={() => handleView(certificate)}
-                    sx={{ 
-                      color: '#6366f1',
-                      borderColor: '#6366f1',
-                      fontWeight: 600,
-                      '&:hover': {
-                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                        borderColor: '#6366f1',
-                      }
-                    }}
-                  >
-                    View
-                  </Button>
-                  <Button
-                    variant="contained"
-                    fullWidth
-                    startIcon={<Download />}
-                    onClick={() => handleDownload(certificate.certificateId)}
-                    sx={{ 
-                      backgroundColor: '#059669',
-                      fontWeight: 600,
-                      '&:hover': {
-                        backgroundColor: '#047857',
-                      }
-                    }}
-                    disabled={certificate.status !== 'ACTIVE'}
-                  >
-                    Download
-                  </Button>
+                    {/* Metrics Row */}
+                    <Box sx={{ 
+                      display: 'flex', 
+                      gap: 4, 
+                      pt: 2,
+                      borderTop: '1px solid #e5e7eb',
+                    }}>
+                      <Box>
+                        <Typography 
+                          variant="caption" 
+                          sx={{ 
+                            color: '#9ca3af',
+                            textTransform: 'uppercase',
+                            letterSpacing: 1.2,
+                            fontWeight: 600,
+                            fontSize: '0.65rem',
+                            display: 'block',
+                            mb: 0.5,
+                          }}
+                        >
+                          Grade
+                        </Typography>
+                        <Typography 
+                          variant="h6" 
+                          sx={{ 
+                            color: '#111827', 
+                            fontWeight: 700,
+                            fontSize: '1.1rem',
+                          }}
+                        >
+                          {certificate.grade}
+                          {certificate.cgpa && (
+                            <Typography 
+                              component="span" 
+                              sx={{ 
+                                color: '#6b7280',
+                                fontSize: '0.9rem',
+                                fontWeight: 500,
+                                ml: 0.5,
+                              }}
+                            >
+                              ({certificate.cgpa})
+                            </Typography>
+                          )}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography 
+                          variant="caption" 
+                          sx={{ 
+                            color: '#9ca3af',
+                            textTransform: 'uppercase',
+                            letterSpacing: 1.2,
+                            fontWeight: 600,
+                            fontSize: '0.65rem',
+                            display: 'block',
+                            mb: 0.5,
+                          }}
+                        >
+                          Issued
+                        </Typography>
+                        <Typography 
+                          variant="body1" 
+                          sx={{ 
+                            color: '#111827', 
+                            fontWeight: 600,
+                            fontSize: '0.95rem',
+                          }}
+                        >
+                          {formatDate(certificate.issueDate)}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </CardContent>
+
+                  {/* Right Section - Actions */}
+                  <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: { xs: 'row', md: 'column' },
+                    alignItems: 'stretch',
+                    justifyContent: 'center',
+                    p: { xs: 2, md: 3 },
+                    gap: 1.5,
+                    minWidth: { xs: '100%', md: 180 },
+                    borderLeft: { xs: 'none', md: '1px solid #e5e7eb' },
+                    borderTop: { xs: '1px solid #e5e7eb', md: 'none' },
+                    background: { xs: '#fafafa', md: 'transparent' },
+                  }}>
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      startIcon={<Download />}
+                      onClick={() => handleDownload(certificate.certificateId)}
+                      disabled={certificate.status !== 'ACTIVE'}
+                      sx={{ 
+                        backgroundColor: '#10b981',
+                        color: '#ffffff',
+                        fontWeight: 600,
+                        fontSize: '0.85rem',
+                        py: 1.2,
+                        borderRadius: '10px',
+                        textTransform: 'none',
+                        boxShadow: 'none',
+                        '&:hover': {
+                          backgroundColor: '#059669',
+                          boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+                        },
+                        '&:disabled': {
+                          backgroundColor: '#d1d5db',
+                          color: '#9ca3af',
+                        }
+                      }}
+                    >
+                      Download
+                    </Button>
+                    
+                    <Tooltip title="Verify certificate authenticity" arrow>
+                      <Button
+                        variant="outlined"
+                        fullWidth
+                        startIcon={<VerifiedUser />}
+                        onClick={() => handleVerifyCertificate(certificate)}
+                        sx={{ 
+                          color: '#3b82f6',
+                          borderColor: '#3b82f6',
+                          fontWeight: 600,
+                          fontSize: '0.85rem',
+                          py: 1.2,
+                          borderRadius: '10px',
+                          textTransform: 'none',
+                          borderWidth: '1.5px',
+                          '&:hover': {
+                            backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                            borderColor: '#2563eb',
+                            borderWidth: '1.5px',
+                          }
+                        }}
+                      >
+                        Verify
+                      </Button>
+                    </Tooltip>
+                    
+                    <Tooltip title="Share verification link" arrow>
+                      <Button
+                        variant="outlined"
+                        fullWidth
+                        startIcon={<Share />}
+                        onClick={() => handleShareCertificate(certificate.certificateNumber)}
+                        sx={{ 
+                          color: '#8b5cf6',
+                          borderColor: '#8b5cf6',
+                          fontWeight: 600,
+                          fontSize: '0.85rem',
+                          py: 1.2,
+                          borderRadius: '10px',
+                          textTransform: 'none',
+                          borderWidth: '1.5px',
+                          '&:hover': {
+                            backgroundColor: 'rgba(139, 92, 246, 0.08)',
+                            borderColor: '#7c3aed',
+                            borderWidth: '1.5px',
+                          }
+                        }}
+                      >
+                        Share
+                      </Button>
+                    </Tooltip>
+                  </Box>
                 </Box>
               </Card>
             </Grid>
           ))}
         </Grid>
       )}
+
+      {/* Verification Result Dialog */}
+      <Dialog open={verifyDialog} onClose={() => setVerifyDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {verificationResult?.valid ? (
+              <>
+                <CheckCircle color="success" />
+                <Typography variant="h6">Certificate Verified</Typography>
+              </>
+            ) : (
+              <>
+                <Cancel color="error" />
+                <Typography variant="h6">Verification Failed</Typography>
+              </>
+            )}
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {verifying ? (
+            <Box sx={{ py: 4, textAlign: 'center' }}>
+              <CircularProgress />
+              <Typography sx={{ mt: 2 }}>Verifying certificate...</Typography>
+            </Box>
+          ) : verificationResult ? (
+            <Box sx={{ py: 2 }}>
+              <Alert severity={verificationResult.valid ? 'success' : 'error'} sx={{ mb: 2 }}>
+                {verificationResult.reason}
+              </Alert>
+              
+              {verificationResult.certificate && (
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <Typography variant="body2" color="text.secondary">
+                      Certificate Number
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      {verificationResult.certificate.certificateNumber}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography variant="body2" color="text.secondary">
+                      Student Name
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      {verificationResult.certificate.studentName}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography variant="body2" color="text.secondary">
+                      Course
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      {verificationResult.certificate.courseName}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="body2" color="text.secondary">
+                      Grade
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      {verificationResult.certificate.grade}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="body2" color="text.secondary">
+                      Status
+                    </Typography>
+                    <Chip
+                      label={verificationResult.certificate.status}
+                      color={verificationResult.valid ? 'success' : 'error'}
+                      size="small"
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography variant="body2" color="text.secondary">
+                      Verification Time
+                    </Typography>
+                    <Typography variant="body1">
+                      {verificationResult.timestamp 
+                        ? formatVerificationTimestamp(verificationResult.timestamp)
+                        : new Date().toLocaleString()}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Divider sx={{ my: 1 }} />
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      startIcon={<ContentCopy />}
+                      onClick={() => selectedCertificate && handleCopyVerificationLink(selectedCertificate.certificateNumber)}
+                      sx={{ mt: 1 }}
+                    >
+                      Copy Verification Link
+                    </Button>
+                  </Grid>
+                </Grid>
+              )}
+            </Box>
+          ) : null}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setVerifyDialog(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
 
       <Snackbar
         open={snackbarOpen}

@@ -31,7 +31,6 @@ const mockStats = {
   totalStudents: 3521,
   activeCertificates: 1198,
   revokedCertificates: 49,
-  pendingCertificates: 15,
 };
 
 const mockRecentCertificates = [

@@ -14,7 +14,7 @@ export interface Certificate {
   digitalSignature: string;
   verificationCode: string;
   pdfPath?: string;
-  status: 'ACTIVE' | 'REVOKED' | 'PENDING' | 'EXPIRED';
+  status: 'ACTIVE' | 'REVOKED';
   revocationReason?: string;
   createdAt: string;
   updatedAt: string;

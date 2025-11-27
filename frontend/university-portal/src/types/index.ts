@@ -44,7 +44,7 @@ export interface Certificate {
   digitalSignature: string;
   verificationCode: string;
   pdfPath?: string;
-  status: 'ACTIVE' | 'REVOKED' | 'PENDING' | 'EXPIRED';
+  status: 'ACTIVE' | 'REVOKED';
   revocationReason?: string;
   universityId: string;
   createdAt: string;
@@ -73,7 +73,7 @@ export interface CertificateUpdateRequest {
 }
 
 export interface CertificateRevocationRequest {
-  certificateId: string;
+  certificateNumber: string;
   reason: string;
 }
 
@@ -83,7 +83,6 @@ export interface UniversityDashboardStats {
   totalStudents: number;
   activeCertificates: number;
   revokedCertificates: number;
-  pendingCertificates: number;
   recentCertificates: Certificate[];
   monthlyIssuance: MonthlyData[];
   certificatesByGrade: GradeData[];

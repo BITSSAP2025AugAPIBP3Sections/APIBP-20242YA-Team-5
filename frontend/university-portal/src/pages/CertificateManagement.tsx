@@ -25,20 +25,23 @@ import {
   InputAdornment,
   Menu,
   MenuItem,
+  Tooltip,
 } from '@mui/material';
 import {
   Add,
   Search,
   FilterList,
-  Download,
   Edit,
   Delete,
-  Visibility,
   MoreVert,
   ArrowBack,
+  VerifiedUser,
+  CheckCircle,
+  Cancel,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { CertificateService } from '../services/certificateService';
+import { VerificationService, VerificationResult } from '../services/verificationService';
 import { Certificate, CertificateUpdateRequest, CertificateRevocationRequest } from '../types';
 
 const CertificateManagement: React.FC = () => {
@@ -51,9 +54,9 @@ const CertificateManagement: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('ALL');
   
   // Dialog states
-  const [viewDialog, setViewDialog] = useState(false);
   const [editDialog, setEditDialog] = useState(false);
   const [revokeDialog, setRevokeDialog] = useState(false);
+  const [verifyDialog, setVerifyDialog] = useState(false);
   const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null);
   
   // Menu state
@@ -64,6 +67,40 @@ const CertificateManagement: React.FC = () => {
   
   // Revoke form state
   const [revokeReason, setRevokeReason] = useState('');
+
+  // Verification state
+  const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
+  const [verifying, setVerifying] = useState(false);
+
+  // Helper function to format timestamp from backend
+  const formatVerificationTimestamp = (timestamp: string | number[]): string => {
+    try {
+      // Handle array format [year, month, day, hour, minute, second, nano]
+      if (Array.isArray(timestamp)) {
+        const [year, month, day, hour, minute, second] = timestamp;
+        const date = new Date(year, month - 1, day, hour, minute, second);
+        return date.toLocaleString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+      }
+      // Handle ISO string format
+      return new Date(timestamp).toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+    } catch (e) {
+      return new Date().toLocaleString();
+    }
+  };
 
   useEffect(() => {
     fetchCertificates();
@@ -113,12 +150,7 @@ const CertificateManagement: React.FC = () => {
 
   const handleMenuClose = () => {
     setAnchorEl(null);
-    setSelectedCertificate(null);
-  };
-
-  const handleViewCertificate = () => {
-    setViewDialog(true);
-    handleMenuClose();
+    // Don't clear selectedCertificate immediately - dialogs might need it
   };
 
   const handleEditCertificate = () => {
@@ -142,24 +174,6 @@ const CertificateManagement: React.FC = () => {
     handleMenuClose();
   };
 
-  const handleDownloadPdf = async (certificateId: string) => {
-    try {
-      const blob = await CertificateService.downloadCertificatePdf(certificateId);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `certificate-${certificateId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      setSuccess('Certificate PDF downloaded successfully');
-    } catch (err: any) {
-      setError(err.message || 'Failed to download certificate PDF');
-    }
-    handleMenuClose();
-  };
-
   const handleUpdateCertificate = async () => {
     if (!selectedCertificate) return;
     
@@ -168,6 +182,7 @@ const CertificateManagement: React.FC = () => {
       setSuccess('Certificate updated successfully');
       setEditDialog(false);
       setEditForm({});
+      setSelectedCertificate(null);
       fetchCertificates();
     } catch (err: any) {
       setError(err.message || 'Failed to update certificate');
@@ -175,20 +190,73 @@ const CertificateManagement: React.FC = () => {
   };
 
   const handleRevoke = async () => {
-    if (!selectedCertificate || !revokeReason.trim()) return;
+    console.log('handleRevoke called');
+    console.log('selectedCertificate:', selectedCertificate);
+    console.log('revokeReason:', revokeReason);
+    
+    if (!selectedCertificate) {
+      setError('No certificate selected');
+      return;
+    }
+    
+    if (!revokeReason.trim()) {
+      setError('Please provide a reason for revocation');
+      return;
+    }
+    
+    if (revokeReason.trim().length < 10) {
+      setError('Revocation reason must be at least 10 characters long');
+      return;
+    }
     
     try {
       const request: CertificateRevocationRequest = {
-        certificateId: selectedCertificate.certificateId,
+        certificateNumber: selectedCertificate.certificateNumber,
         reason: revokeReason.trim(),
       };
-      await CertificateService.revokeCertificate(request);
+      
+      console.log('Sending revocation request:', request);
+      
+      const result = await CertificateService.revokeCertificate(request);
+      
+      console.log('Revocation successful:', result);
+      
       setSuccess('Certificate revoked successfully');
       setRevokeDialog(false);
       setRevokeReason('');
-      fetchCertificates();
+      setSelectedCertificate(null);
+      await fetchCertificates();
     } catch (err: any) {
-      setError(err.message || 'Failed to revoke certificate');
+      console.error('Error revoking certificate:', err);
+      console.error('Error response:', err.response);
+      const errorMessage = err.response?.data?.message || err.response?.data || err.message || 'Failed to revoke certificate';
+      setError(errorMessage);
+    }
+  };
+
+  const handleVerifyCertificate = async (certificate?: Certificate) => {
+    // Use passed certificate or selectedCertificate
+    const certToVerify = certificate || selectedCertificate;
+    if (!certToVerify) return;
+    
+    // Set selected certificate for dialog display
+    if (certificate) {
+      setSelectedCertificate(certificate);
+    }
+    
+    try {
+      setVerifying(true);
+      const result = await VerificationService.verifyCertificate(certToVerify.certificateNumber);
+      setVerificationResult(result);
+      setVerifyDialog(true);
+    } catch (err: any) {
+      setError(err.message || 'Failed to verify certificate');
+    } finally {
+      setVerifying(false);
+    }
+    // Close menu if it's open
+    if (anchorEl) {
+      handleMenuClose();
     }
   };
 
@@ -208,8 +276,6 @@ const CertificateManagement: React.FC = () => {
     switch (status) {
       case 'ACTIVE': return 'success';
       case 'REVOKED': return 'error';
-      case 'PENDING': return 'warning';
-      case 'EXPIRED': return 'secondary';
       default: return 'default';
     }
   };
@@ -264,9 +330,7 @@ const CertificateManagement: React.FC = () => {
         >
           <MenuItem value="ALL">All Status</MenuItem>
           <MenuItem value="ACTIVE">Active</MenuItem>
-          <MenuItem value="PENDING">Pending</MenuItem>
           <MenuItem value="REVOKED">Revoked</MenuItem>
-          <MenuItem value="EXPIRED">Expired</MenuItem>
         </TextField>
       </Box>
 
@@ -350,12 +414,32 @@ const CertificateManagement: React.FC = () => {
                         />
                       </TableCell>
                       <TableCell align="center">
-                        <IconButton
-                          onClick={(e) => handleMenuOpen(e, certificate)}
-                          size="small"
-                        >
-                          <MoreVert />
-                        </IconButton>
+                        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', alignItems: 'center' }}>
+                          <Tooltip title="Verify certificate authenticity" arrow>
+                            <Button
+                              variant="contained"
+                              size="small"
+                              color="primary"
+                              startIcon={<VerifiedUser />}
+                              onClick={() => handleVerifyCertificate(certificate)}
+                              sx={{ 
+                                minWidth: 100,
+                                textTransform: 'none',
+                                fontWeight: 600
+                              }}
+                            >
+                              Verify
+                            </Button>
+                          </Tooltip>
+                          <Tooltip title="More actions" arrow>
+                            <IconButton
+                              onClick={(e) => handleMenuOpen(e, certificate)}
+                              size="small"
+                            >
+                              <MoreVert />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -372,17 +456,9 @@ const CertificateManagement: React.FC = () => {
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
       >
-        <MenuItem onClick={handleViewCertificate}>
-          <Visibility sx={{ mr: 1 }} fontSize="small" />
-          View Details
-        </MenuItem>
         <MenuItem onClick={handleEditCertificate}>
           <Edit sx={{ mr: 1 }} fontSize="small" />
           Edit
-        </MenuItem>
-        <MenuItem onClick={() => selectedCertificate && handleDownloadPdf(selectedCertificate.certificateId)}>
-          <Download sx={{ mr: 1 }} fontSize="small" />
-          Download PDF
         </MenuItem>
         {selectedCertificate?.status === 'ACTIVE' && (
           <MenuItem onClick={handleRevokeCertificate}>
@@ -392,73 +468,12 @@ const CertificateManagement: React.FC = () => {
         )}
       </Menu>
 
-      {/* View Certificate Dialog */}
-      <Dialog open={viewDialog} onClose={() => setViewDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Certificate Details</DialogTitle>
-        <DialogContent>
-          {selectedCertificate && (
-            <Grid container spacing={2} sx={{ pt: 2 }}>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2">Certificate Number</Typography>
-                <Typography variant="body1">{selectedCertificate.certificateNumber}</Typography>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2">Student Name</Typography>
-                <Typography variant="body1">{selectedCertificate.studentName}</Typography>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2">Student ID</Typography>
-                <Typography variant="body1">{selectedCertificate.studentId}</Typography>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2">Course</Typography>
-                <Typography variant="body1">{selectedCertificate.courseName}</Typography>
-              </Grid>
-              {selectedCertificate.specialization && (
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2">Specialization</Typography>
-                  <Typography variant="body1">{selectedCertificate.specialization}</Typography>
-                </Grid>
-              )}
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2">Grade</Typography>
-                <Typography variant="body1">{selectedCertificate.grade}</Typography>
-              </Grid>
-              {selectedCertificate.cgpa && (
-                <Grid item xs={12} md={6}>
-                  <Typography variant="subtitle2">CGPA</Typography>
-                  <Typography variant="body1">{selectedCertificate.cgpa}</Typography>
-                </Grid>
-              )}
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2">Issue Date</Typography>
-                <Typography variant="body1">
-                  {new Date(selectedCertificate.issueDate).toLocaleDateString()}
-                </Typography>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2">Completion Date</Typography>
-                <Typography variant="body1">
-                  {new Date(selectedCertificate.completionDate).toLocaleDateString()}
-                </Typography>
-              </Grid>
-              <Grid item xs={12}>
-                <Typography variant="subtitle2">Status</Typography>
-                <Chip
-                  label={selectedCertificate.status}
-                  color={getStatusColor(selectedCertificate.status) as any}
-                />
-              </Grid>
-            </Grid>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setViewDialog(false)}>Close</Button>
-        </DialogActions>
-      </Dialog>
-
       {/* Edit Certificate Dialog */}
-      <Dialog open={editDialog} onClose={() => setEditDialog(false)} maxWidth="md" fullWidth>
+      <Dialog open={editDialog} onClose={() => {
+        setEditDialog(false);
+        setEditForm({});
+        setSelectedCertificate(null);
+      }} maxWidth="md" fullWidth>
         <DialogTitle>Edit Certificate</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ pt: 2 }}>
@@ -515,12 +530,29 @@ const CertificateManagement: React.FC = () => {
       </Dialog>
 
       {/* Revoke Certificate Dialog */}
-      <Dialog open={revokeDialog} onClose={() => setRevokeDialog(false)}>
+      <Dialog open={revokeDialog} onClose={() => {
+        setRevokeDialog(false);
+        setRevokeReason('');
+        setSelectedCertificate(null);
+      }} maxWidth="sm" fullWidth>
         <DialogTitle>Revoke Certificate</DialogTitle>
         <DialogContent>
           <Typography variant="body1" gutterBottom>
             Are you sure you want to revoke this certificate? This action cannot be undone.
           </Typography>
+          {selectedCertificate && (
+            <Box sx={{ mt: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+              <Typography variant="body2" color="text.secondary">
+                <strong>Certificate:</strong> {selectedCertificate.certificateNumber}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                <strong>Student:</strong> {selectedCertificate.studentName}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                <strong>Course:</strong> {selectedCertificate.courseName}
+              </Typography>
+            </Box>
+          )}
           <TextField
             fullWidth
             label="Reason for Revocation"
@@ -530,18 +562,125 @@ const CertificateManagement: React.FC = () => {
             rows={3}
             sx={{ mt: 2 }}
             required
+            helperText={`${revokeReason.length}/10 characters minimum`}
+            error={revokeReason.length > 0 && revokeReason.length < 10}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setRevokeDialog(false)}>Cancel</Button>
+          <Button onClick={() => {
+            setRevokeDialog(false);
+            setRevokeReason('');
+          }}>
+            Cancel
+          </Button>
           <Button 
-            onClick={handleRevoke} 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleRevoke();
+            }}
             color="error" 
             variant="contained"
-            disabled={!revokeReason.trim()}
+            disabled={revokeReason.trim().length < 10}
           >
             Revoke
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Verification Result Dialog */}
+      <Dialog open={verifyDialog} onClose={() => {
+        setVerifyDialog(false);
+        setVerificationResult(null);
+        setSelectedCertificate(null);
+      }} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {verificationResult?.valid ? (
+              <>
+                <CheckCircle color="success" />
+                <Typography variant="h6">Certificate Verified</Typography>
+              </>
+            ) : (
+              <>
+                <Cancel color="error" />
+                <Typography variant="h6">Verification Failed</Typography>
+              </>
+            )}
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {verifying ? (
+            <Box sx={{ py: 4, textAlign: 'center' }}>
+              <Typography>Verifying certificate...</Typography>
+            </Box>
+          ) : verificationResult ? (
+            <Box sx={{ py: 2 }}>
+              <Alert severity={verificationResult.valid ? 'success' : 'error'} sx={{ mb: 2 }}>
+                {verificationResult.reason}
+              </Alert>
+              
+              {verificationResult.certificate && (
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <Typography variant="body2" color="text.secondary">
+                      Certificate Number
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      {verificationResult.certificate.certificateNumber}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography variant="body2" color="text.secondary">
+                      Student Name
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      {verificationResult.certificate.studentName}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography variant="body2" color="text.secondary">
+                      Course
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      {verificationResult.certificate.courseName}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="body2" color="text.secondary">
+                      Grade
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      {verificationResult.certificate.grade}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="body2" color="text.secondary">
+                      Status
+                    </Typography>
+                    <Chip
+                      label={verificationResult.certificate.status}
+                      color={verificationResult.valid ? 'success' : 'error'}
+                      size="small"
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography variant="body2" color="text.secondary">
+                      Verification Time
+                    </Typography>
+                    <Typography variant="body1">
+                      {verificationResult.timestamp 
+                        ? formatVerificationTimestamp(verificationResult.timestamp)
+                        : new Date().toLocaleString()}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              )}
+            </Box>
+          ) : null}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setVerifyDialog(false)}>Close</Button>
         </DialogActions>
       </Dialog>
 
