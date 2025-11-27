@@ -36,10 +36,12 @@ import {
   FilterList,
   CheckCircle,
   Cancel,
+  Refresh,
 } from '@mui/icons-material';
 import { adminService } from '../services';
 import { User, PaginatedResponse } from '../types';
 import { format } from 'date-fns';
+import { universityService } from '../services/universityService';
 
 export const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<PaginatedResponse<User> | null>(null);
@@ -101,15 +103,29 @@ export const UserManagement: React.FC = () => {
       await adminService.updateUser(editUser.id, {
         fullName: editUser.fullName,
         email: editUser.email,
-        role: editUser.role,
-        isVerified: editUser.isVerified,
       });
+      
+      // If this is a university user, also sync to university service
+      if (editUser.role === 'UNIVERSITY' && editUser.uid) {
+        try {
+          await universityService.updateUniversity(editUser.uid, {
+            universityName: editUser.fullName,
+            email: editUser.email,
+          });
+        } catch (err) {
+          console.error('Failed to sync update to university service:', err);
+        }
+      }
+      
       // Reload users to reflect changes
       const data = await adminService.getUsers(page, 20, searchTerm, roleFilter);
       setUsers(data);
       setEditUser(null);
+      setSuccessMessage('User updated successfully');
+      setError(null);
     } catch (err: any) {
       setError(err.message || 'Failed to update user');
+      setSuccessMessage(null);
     } finally {
       setUpdating(false);
     }
@@ -119,12 +135,30 @@ export const UserManagement: React.FC = () => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
 
     try {
+      // Get user info before deleting
+      const usersData = users?.content || [];
+      const user = usersData.find(u => u.id === userId);
+      
+      // Delete from auth service
       await adminService.deleteUser(userId);
+      
+      // If this is a university user, also delete from university service
+      if (user && user.role === 'UNIVERSITY' && user.uid) {
+        try {
+          await universityService.deleteUniversity(user.uid);
+        } catch (err) {
+          console.error('Failed to sync delete to university service:', err);
+        }
+      }
+      
       // Reload users to reflect changes
       const data = await adminService.getUsers(page, 20, searchTerm, roleFilter);
       setUsers(data);
+      setSuccessMessage('User deleted successfully');
+      setError(null);
     } catch (err: any) {
       setError(err.message || 'Failed to delete user');
+      setSuccessMessage(null);
     }
   };
 
@@ -165,6 +199,21 @@ export const UserManagement: React.FC = () => {
     }
   };
 
+  const handleRefresh = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await adminService.getUsers(page, 20, searchTerm, roleFilter);
+      setUsers(data);
+      setSuccessMessage('Users refreshed successfully');
+    } catch (err: any) {
+      setError(err.message || 'Failed to refresh users');
+      setSuccessMessage(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Since we're doing filtering on the backend, we don't need to filter here
   const displayUsers = users?.content || [];
 
@@ -184,14 +233,23 @@ export const UserManagement: React.FC = () => {
         <Typography variant="h4" component="h1" fontWeight="bold">
           User Management
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<Download />}
-          onClick={handleExportUsers}
-          sx={{ ml: 2 }}
-        >
-          Export Users
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="outlined"
+            startIcon={<Refresh />}
+            onClick={handleRefresh}
+            disabled={loading}
+          >
+            Refresh
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<Download />}
+            onClick={handleExportUsers}
+          >
+            Export Users
+          </Button>
+        </Box>
       </Box>
 
       {error && (
@@ -363,30 +421,6 @@ export const UserManagement: React.FC = () => {
                 fullWidth
                 type="email"
               />
-              <FormControl fullWidth>
-                <InputLabel>Role</InputLabel>
-                <Select
-                  value={editUser.role}
-                  label="Role"
-                  onChange={(e) => setEditUser({ ...editUser, role: e.target.value as any })}
-                >
-                  <MenuItem value="admin">Admin</MenuItem>
-                  <MenuItem value="university">University</MenuItem>
-                  <MenuItem value="student">Student</MenuItem>
-                  <MenuItem value="employer">Employer</MenuItem>
-                </Select>
-              </FormControl>
-              <FormControl fullWidth>
-                <InputLabel>Verified Status</InputLabel>
-                <Select
-                  value={editUser.isVerified ? 'verified' : 'unverified'}
-                  label="Verified Status"
-                  onChange={(e) => setEditUser({ ...editUser, isVerified: e.target.value === 'verified' })}
-                >
-                  <MenuItem value="verified">Verified</MenuItem>
-                  <MenuItem value="unverified">Unverified</MenuItem>
-                </Select>
-              </FormControl>
             </Box>
           )}
         </DialogContent>
