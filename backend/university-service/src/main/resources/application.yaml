@@ -1,0 +1,46 @@
+server:
+  port: ${SERVER_PORT:3002}
+  servlet:
+    context-path: /api
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/university_db
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+logging:
+  level:
+    root: INFO
+    com.universities: DEBUG
+    org.springframework.web: INFO
+
+auth:
+  service:
+    url: ${AUTH_SERVICE_URL:http://auth-service:3001}
+    verify-endpoint: ${AUTH_VERIFY_ENDPOINT:/api/auth/verify}
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+
+papertrail:
+  endpoint: "https://logs.collector.ap-01.cloud.solarwinds.com/v1/logs"
+  token: "TYi9-9QRQgoeE0ThX7PqE-N_RQ21vjeEIbH42mxDKnjtffuVnb6AZJu4KDUvkjRb_08nIi4"
