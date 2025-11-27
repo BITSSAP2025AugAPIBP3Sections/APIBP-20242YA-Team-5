@@ -20,6 +20,8 @@ import {
   VisibilityOff,
   AccountBalance,
   Person,
+  Phone,
+  LocationOn,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services';
@@ -36,7 +38,9 @@ export const Signup: React.FC = () => {
     fullName: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    address: '',
+    phone: ''
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,7 +122,9 @@ export const Signup: React.FC = () => {
       const response = await authService.signup({
         fullName: formData.fullName,
         email: formData.email,
-        password: formData.password
+        password: formData.password,
+        universityAddress: formData.address,
+        universityPhone: formData.phone
       });
       
       // Show success message with UID
@@ -211,6 +217,44 @@ export const Signup: React.FC = () => {
                     </InputAdornment>
                   ),
                 }}
+              />
+
+              <TextField
+                fullWidth
+                label="Address"
+                name="address"
+                value={formData.address}
+                onChange={handleInputChange}
+                margin="normal"
+                disabled={loading}
+                multiline
+                rows={2}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LocationOn />
+                    </InputAdornment>
+                  ),
+                }}
+                helperText="Your university's address"
+              />
+
+              <TextField
+                fullWidth
+                label="Phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleInputChange}
+                margin="normal"
+                disabled={loading}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Phone />
+                    </InputAdornment>
+                  ),
+                }}
+                helperText="University contact number"
               />
 
               <TextField

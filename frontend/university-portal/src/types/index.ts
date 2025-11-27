@@ -130,6 +130,8 @@ export interface SignupRequest {
   password: string;
   fullName: string;
   universityId?: string;
+  universityAddress?: string;
+  universityPhone?: string;
 }
 
 export interface AuthUser {
