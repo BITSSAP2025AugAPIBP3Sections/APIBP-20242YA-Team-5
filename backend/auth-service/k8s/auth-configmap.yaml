@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: auth-service-config
+data:
+  # Spring Boot relaxed binding:
+  # SPRING_DATASOURCE_URL -> spring.datasource.url
+  SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-service:5432/studentcert_auth
+
+  # university.service.url -> UNIVERSITY_SERVICE_URL
+  UNIVERSITY_SERVICE_URL: http://university-service:8080
+
+  # server.port -> SERVER_PORT
+  SERVER_PORT: "8081"
+
+  # jwt.expiration -> JWT_EXPIRATION (in ms)
+  JWT_EXPIRATION: "86400000"
