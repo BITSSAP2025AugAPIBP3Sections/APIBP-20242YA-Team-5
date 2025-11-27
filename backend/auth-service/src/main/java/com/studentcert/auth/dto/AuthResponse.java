@@ -30,6 +30,8 @@ public class AuthResponse {
         private String refreshToken;
         private String tokenType = "Bearer";
         private LocalDateTime expiresAt;
+        private String uid;  // User's unique identifier
+        private String universityUid;  // For students - their university's UID
     }
 
     // Legacy format for compatibility

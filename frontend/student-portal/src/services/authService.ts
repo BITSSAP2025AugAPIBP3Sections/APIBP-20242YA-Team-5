@@ -1,5 +1,5 @@
 import { authApi } from './api';
-import { LoginRequest, SignupRequest, AuthUser, ApiResponse, AuthResponse } from '../types';
+import { LoginRequest, SignupRequest, AuthUser, ApiResponse } from '../types';
 
 export const authService = {
   async login(credentials: LoginRequest): Promise<AuthUser> {
@@ -62,11 +62,9 @@ export const authService = {
         throw new Error(response.data.message || 'Registration failed');
       }
       
-      const userData = response.data.data!;
-      
-      // Store auth data
-      localStorage.setItem('student_token', userData.token);
-      localStorage.setItem('student_user', JSON.stringify(userData));
+      // DO NOT store token for unverified users
+      // User must verify account and login manually
+      // This prevents auto-login to dashboard before verification
       
       return response.data;
     } catch (error: any) {

@@ -18,8 +18,8 @@ public class Certificate {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID certificateId;
     private String certificateNumber;
-    private UUID studentId;
-    private UUID universityId;
+    private String studentId;  // Stores the user's uid (e.g., STU-2025-001)
+    private String universityId;  // Stores the university's uid (e.g., UNI-2025-001)
     private String studentName;
     private String studentEmail;
     private String courseName;

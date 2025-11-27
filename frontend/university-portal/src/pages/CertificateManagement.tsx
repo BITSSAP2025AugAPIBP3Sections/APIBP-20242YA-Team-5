@@ -72,8 +72,32 @@ const CertificateManagement: React.FC = () => {
   const fetchCertificates = async () => {
     try {
       setLoading(true);
-      const data = await CertificateService.getCertificates();
-      setCertificates(data);
+      
+      // Get current university's UID
+      const storedUser = localStorage.getItem('university_user');
+      if (!storedUser) {
+        setError('Authentication error. Please log out and log in again.');
+        setLoading(false);
+        return;
+      }
+      
+      const currentUser = JSON.parse(storedUser);
+      const currentUniversityUid = currentUser.uid;
+      
+      if (!currentUniversityUid) {
+        setError('University UID not found. Please contact support.');
+        setLoading(false);
+        return;
+      }
+      
+      const allCertificates = await CertificateService.getCertificates();
+      
+      // Filter certificates issued by this university
+      const filteredCertificates = allCertificates.filter(
+        (cert: Certificate) => cert.universityId === currentUniversityUid
+      );
+      
+      setCertificates(filteredCertificates);
       setError(null);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch certificates');

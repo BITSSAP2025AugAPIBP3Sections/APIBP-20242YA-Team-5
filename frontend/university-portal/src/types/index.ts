@@ -141,6 +141,8 @@ export interface AuthUser {
   role: string;
   universityId?: string;
   token: string;
+  uid?: string;  // User's unique identifier (e.g., UNI-2025-001)
+  universityUid?: string;  // For students - their university's UID
 }
 
 // File upload types

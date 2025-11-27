@@ -79,6 +79,62 @@ public class UserController {
     }
     
     /**
+     * Get user by email - for certificate service integration
+     */
+    @GetMapping("/email/{email}")
+    public ResponseEntity<UserInfoResponse> getUserByEmail(@PathVariable String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+        
+        UserInfoResponse response = UserInfoResponse.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .role(user.getRole().name())
+                .uid(user.getUid())
+                .universityUid(user.getUniversityUid())
+                .build();
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Get user by ID - for certificate service integration
+     */
+    @GetMapping("/{userId}")
+    public ResponseEntity<UserInfoResponse> getUserById(@PathVariable Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+        
+        UserInfoResponse response = UserInfoResponse.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .role(user.getRole().name())
+                .uid(user.getUid())
+                .universityUid(user.getUniversityUid())
+                .build();
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * DTO for user information response
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UserInfoResponse {
+        private Long id;
+        private String email;
+        private String fullName;
+        private String role;
+        private String uid;
+        private String universityUid;
+    }
+    
+    /**
      * DTO for university information
      */
     @Data

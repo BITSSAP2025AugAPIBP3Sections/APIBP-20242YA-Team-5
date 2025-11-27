@@ -22,6 +22,18 @@ public class JwtUtil {
         return extractAllClaims(token).get("role", String.class);
     }
 
+    public Long extractUserId(String token) {
+        Object userIdObj = extractAllClaims(token).get("userId");
+        if (userIdObj instanceof Integer) {
+            return ((Integer) userIdObj).longValue();
+        }
+        return (Long) userIdObj;
+    }
+
+    public String extractFullName(String token) {
+        return extractAllClaims(token).get("fullName", String.class);
+    }
+
     private Claims extractAllClaims(String token) {
         return Jwts
                 .parserBuilder()

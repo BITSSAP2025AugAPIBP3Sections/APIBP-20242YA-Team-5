@@ -6,8 +6,8 @@ server:
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/certificatesdb
-    username: myuser
-    password: mypassword
+    username: postgres
+    password: password
     driver-class-name: org.postgresql.Driver
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
@@ -23,7 +23,7 @@ logging:
 
 auth:
   service:
-    url: ${AUTH_SERVICE_URL:http://auth-service:3001}
+    url: ${AUTH_SERVICE_URL:http://localhost:8081}
     verify-endpoint: ${AUTH_VERIFY_ENDPOINT:/api/auth/verify}
 
 jwt:

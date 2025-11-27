@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,9 +28,17 @@ public class CertificateController {
     Logger logger = LoggerFactory.getLogger(CertificateController.class);
 
     @PostMapping
-    public ResponseEntity<Certificate> issueCertificate(@Validated @RequestBody CertificateIssueRequest req) {
+    public ResponseEntity<Certificate> issueCertificate(
+            @Validated @RequestBody CertificateIssueRequest req,
+            @RequestHeader(value = "Authorization", required = true) String authHeader) {
         logger.info("Issuing certificate with certificate data: {}", req);
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.issueCertificate(req));
+        
+        // Extract university ID from JWT token
+        String token = authHeader.substring(7); // Remove "Bearer " prefix
+        Long universityUserId = jwtUtil.extractUserId(token);
+        
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(service.issueCertificate(req, universityUserId));
     }
 
     @GetMapping
@@ -96,14 +103,21 @@ public class CertificateController {
     }
 
     @PostMapping("/batch-issue")
-    public ResponseEntity<Map<String, Object>> batchIssueCertificates(@RequestBody Map<String, List<CertificateIssueRequest>> request) {
+    public ResponseEntity<Map<String, Object>> batchIssueCertificates(
+            @RequestBody Map<String, List<CertificateIssueRequest>> request,
+            @RequestHeader(value = "Authorization", required = true) String authHeader) {
+        
+        // Extract university ID from JWT token
+        String token = authHeader.substring(7); // Remove "Bearer " prefix
+        Long universityUserId = jwtUtil.extractUserId(token);
+        
         List<CertificateIssueRequest> certs = request.get("certificates");
         int success = 0, failed = 0;
         List<Map<String, Object>> results = new ArrayList<>();
 
         for (var req : certs) {
             try {
-                Certificate cert = service.issueCertificate(req);
+                Certificate cert = service.issueCertificate(req, universityUserId);
                 success++;
                 results.add(Map.of("success", true, "certificate", cert));
             } catch (Exception e) {

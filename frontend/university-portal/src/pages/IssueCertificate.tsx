@@ -57,20 +57,26 @@ const IssueCertificate: React.FC = () => {
       try {
         setLoadingStudents(true);
         
-        // Debug: Check if token exists
-        const token = localStorage.getItem('university_token');
-        console.log('University token exists:', !!token);
-        if (token) {
-          console.log('Token preview:', token.substring(0, 20) + '...');
-        } else {
-          console.error('No authentication token found! User may not be logged in.');
+        // Get current university's UID
+        const storedUser = localStorage.getItem('university_user');
+        if (!storedUser) {
           setError('Authentication error. Please log out and log in again.');
           setLoadingStudents(false);
           return;
         }
         
+        const currentUser = JSON.parse(storedUser);
+        const currentUniversityUid = currentUser.uid;
+        
+        if (!currentUniversityUid) {
+          setError('University UID not found. Please contact support.');
+          setLoadingStudents(false);
+          return;
+        }
+        
+        console.log('Current University UID:', currentUniversityUid);
+        
         // Fetch students with STUDENT role from auth service
-        console.log('Fetching students from:', authApi.defaults.baseURL + '/users');
         const response = await authApi.get('/users', {
           params: {
             page: 0,
@@ -81,16 +87,21 @@ const IssueCertificate: React.FC = () => {
         
         console.log('API Response:', response.data);
         
+        let allStudents: Student[] = [];
         if (response.data && response.data.content) {
-          console.log('Found students (paginated):', response.data.content.length);
-          setStudents(response.data.content);
+          allStudents = response.data.content;
         } else if (response.data && Array.isArray(response.data)) {
-          console.log('Found students (array):', response.data.length);
-          setStudents(response.data);
-        } else {
-          console.log('No students found in response');
-          setStudents([]);
+          allStudents = response.data;
         }
+        
+        // Filter students by universityUid - only show students enrolled in this university
+        const filteredStudents = allStudents.filter((student: any) => 
+          student.universityUid === currentUniversityUid
+        );
+        
+        console.log('Total students:', allStudents.length);
+        console.log('Students enrolled in this university:', filteredStudents.length);
+        setStudents(filteredStudents);
       } catch (err: any) {
         console.error('Failed to fetch students:', err);
         console.error('Error response:', err.response?.data);

@@ -51,6 +51,8 @@ public class AuthController {
                     .fullName(user.getFullName())
                     .role(user.getRole().toString().toLowerCase())
                     .token(token)
+                    .uid(user.getUid())
+                    .universityUid(user.getUniversityUid())
                     .build())
                 .build();
             
@@ -129,6 +131,8 @@ public class AuthController {
                     .fullName(user.getFullName())
                     .role(user.getRole().toString().toLowerCase())
                     .token(token)
+                    .uid(user.getUid())
+                    .universityUid(user.getUniversityUid())
                     .build())
                 .build();
             

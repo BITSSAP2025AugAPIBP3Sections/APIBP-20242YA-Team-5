@@ -47,6 +47,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/health").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/users/universities").permitAll()  // Public endpoint for university list
+                .requestMatchers(HttpMethod.GET, "/api/users/email/**").permitAll()  // For certificate service to fetch user by email
+                .requestMatchers(HttpMethod.GET, "/api/users/{id}").permitAll()  // For certificate service to fetch user by ID
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/auth/logout").authenticated()
                 .requestMatchers("/api/auth/me").authenticated()

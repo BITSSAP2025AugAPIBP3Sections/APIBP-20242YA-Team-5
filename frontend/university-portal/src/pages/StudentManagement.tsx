@@ -53,6 +53,23 @@ const StudentManagement: React.FC = () => {
       setLoading(true);
       setError(null);
       
+      // Get current university's UID
+      const storedUser = localStorage.getItem('university_user');
+      if (!storedUser) {
+        setError('Authentication error. Please log out and log in again.');
+        setLoading(false);
+        return;
+      }
+      
+      const currentUser = JSON.parse(storedUser);
+      const currentUniversityUid = currentUser.uid;
+      
+      if (!currentUniversityUid) {
+        setError('University UID not found. Please contact support.');
+        setLoading(false);
+        return;
+      }
+      
       const response = await authApi.get('/users', {
         params: {
           page: 0,
@@ -61,11 +78,19 @@ const StudentManagement: React.FC = () => {
         }
       });
       
+      let allStudents: Student[] = [];
       if (response.data && response.data.content) {
-        setStudents(response.data.content);
+        allStudents = response.data.content;
       } else if (response.data && Array.isArray(response.data)) {
-        setStudents(response.data);
+        allStudents = response.data;
       }
+      
+      // Filter students by universityUid - only show students enrolled in this university
+      const filteredStudents = allStudents.filter((student: any) => 
+        student.universityUid === currentUniversityUid
+      );
+      
+      setStudents(filteredStudents);
     } catch (err: any) {
       console.error('Failed to fetch students:', err);
       setError(err.message || 'Failed to load students');
