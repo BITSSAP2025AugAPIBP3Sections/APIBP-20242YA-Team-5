@@ -8,6 +8,7 @@ import com.studentcert.auth.model.UserRole;
 import com.studentcert.auth.service.AuthService;
 import com.studentcert.auth.service.JwtService;
 import com.studentcert.auth.service.UidGenerationService;
+import com.studentcert.auth.service.UniversityServiceClient;
 import com.studentcert.auth.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,9 @@ public class AuthController {
     
     @Autowired
     private UidGenerationService uidGenerationService;
+    
+    @Autowired
+    private UniversityServiceClient universityServiceClient;
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
@@ -73,6 +77,13 @@ public class AuthController {
                 return ResponseEntity.status(400).body(errorResponse);
             }
             
+            // For UNIVERSITY role, use fullName as universityName if universityName is not provided
+            if (registerRequest.getRole() == UserRole.UNIVERSITY) {
+                if (registerRequest.getUniversityName() == null || registerRequest.getUniversityName().trim().isEmpty()) {
+                    registerRequest.setUniversityName(registerRequest.getFullName());
+                }
+            }
+            
             User user = userService.createUser(
                 registerRequest.getEmail(), 
                 registerRequest.getPassword(), 
@@ -84,14 +95,28 @@ public class AuthController {
             
             // Update additional fields
             user.setFullName(registerRequest.getFullName());
-            user.setPhone(registerRequest.getPhone());
-            user.setUniversityId(registerRequest.getUniversityId());
-            user.setStudentId(registerRequest.getStudentId());
             user.setUid(uid);
             user.setUniversityUid(registerRequest.getUniversityUid());
             
             // Save updated user
             user = userService.updateUser(user);
+            
+            // If registering a university, also create university record in university service
+            if (registerRequest.getRole() == UserRole.UNIVERSITY) {
+                try {
+                    universityServiceClient.registerUniversity(
+                        uid, 
+                        registerRequest.getUniversityName(),
+                        registerRequest.getEmail(),
+                        registerRequest.getUniversityAddress(),
+                        registerRequest.getUniversityPhone()
+                    );
+                } catch (Exception e) {
+                    // If university service registration fails, rollback user creation
+                    userService.deleteUser(user.getId());
+                    throw new RuntimeException("Failed to register university: " + e.getMessage());
+                }
+            }
             
             String token = jwtService.generateToken(user);
             

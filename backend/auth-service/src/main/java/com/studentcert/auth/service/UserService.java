@@ -54,4 +54,8 @@ public class UserService {
         user.setUpdatedAt(LocalDateTime.now());
         return userRepository.save(user);
     }
+    
+    public void deleteUser(Long userId) {
+        userRepository.deleteById(userId);
+    }
 }
