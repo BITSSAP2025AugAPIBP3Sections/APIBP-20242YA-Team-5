@@ -19,6 +19,9 @@ public class AdminUserService {
 
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private UniversityServiceClient universityServiceClient;
 
     public Page<UserDto> getUsers(int page, int size, String search, UserRole role) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
@@ -49,11 +52,10 @@ public class AdminUserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
         
+        boolean wasVerified = user.getIsVerified();
+        
         if (request.getFullName() != null) {
             user.setFullName(request.getFullName());
-        }
-        if (request.getPhone() != null) {
-            user.setPhone(request.getPhone());
         }
         if (request.getRole() != null) {
             user.setRole(request.getRole());
@@ -64,12 +66,6 @@ public class AdminUserService {
         if (request.getIsActive() != null) {
             user.setIsActive(request.getIsActive());
         }
-        if (request.getUniversityId() != null) {
-            user.setUniversityId(request.getUniversityId());
-        }
-        if (request.getStudentId() != null) {
-            user.setStudentId(request.getStudentId());
-        }
         if (request.getUniversityUid() != null) {
             user.setUniversityUid(request.getUniversityUid());
         }
@@ -77,12 +73,49 @@ public class AdminUserService {
         user.setUpdatedAt(LocalDateTime.now());
         user = userRepository.save(user);
         
+        // Sync changes to university service for university users
+        if (user.getRole() == UserRole.UNIVERSITY && user.getUid() != null) {
+            try {
+                // Sync verification status changes
+                if (!wasVerified && user.getIsVerified()) {
+                    // Changed from unverified to verified
+                    universityServiceClient.verifyUniversity(user.getUid());
+                } else if (wasVerified && !user.getIsVerified()) {
+                    // Changed from verified to unverified
+                    universityServiceClient.unverifyUniversity(user.getUid());
+                }
+                
+                // Sync name updates to university service
+                if (request.getFullName() != null) {
+                    universityServiceClient.updateUniversity(
+                        user.getUid(), 
+                        user.getFullName(), 
+                        user.getEmail(),
+                        null, // address not in User table
+                        null  // phone not in User table
+                    );
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to sync changes to university service: " + e.getMessage());
+            }
+        }
+        
         return convertToDto(user);
     }
 
     public void deleteUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+        
+        // If this is a university user, also delete from university service
+        if (user.getRole() == UserRole.UNIVERSITY && user.getUid() != null) {
+            try {
+                universityServiceClient.deleteUniversity(user.getUid());
+            } catch (Exception e) {
+                System.err.println("Failed to delete university from university service: " + e.getMessage());
+            }
+        }
+        
         userRepository.delete(user);
     }
 
@@ -93,6 +126,16 @@ public class AdminUserService {
         user.setIsVerified(true);
         user.setUpdatedAt(LocalDateTime.now());
         user = userRepository.save(user);
+        
+        // If this is a university user, also verify in university service
+        if (user.getRole() == UserRole.UNIVERSITY && user.getUid() != null) {
+            try {
+                universityServiceClient.verifyUniversity(user.getUid());
+            } catch (Exception e) {
+                // Log error but don't fail the verification in auth service
+                System.err.println("Failed to sync verification to university service: " + e.getMessage());
+            }
+        }
         
         return convertToDto(user);
     }
@@ -127,12 +170,8 @@ public class AdminUserService {
                 .role(user.getRole())
                 .isVerified(user.getIsVerified())
                 .isActive(user.getIsActive())
-                .phone(user.getPhone())
-                .universityId(user.getUniversityId())
-                .studentId(user.getStudentId())
                 .uid(user.getUid())
                 .universityUid(user.getUniversityUid())
-                .lastLoginAt(user.getLastLoginAt())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();
