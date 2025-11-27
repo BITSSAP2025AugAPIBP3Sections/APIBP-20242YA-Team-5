@@ -6,7 +6,6 @@ import {
   Grid,
   Card,
   CardContent,
-  CardActions,
   Chip,
   Alert,
   CircularProgress,
@@ -15,6 +14,11 @@ import {
   IconButton,
   Avatar,
   Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
   Tooltip,
 } from '@mui/material';
 import {
@@ -23,31 +27,34 @@ import {
   Phone,
   CheckCircle,
   Cancel,
-  Edit,
-  Delete,
   Refresh,
   AccountBalance,
   CalendarToday,
+  Edit,
+  Delete,
 } from '@mui/icons-material';
-import { adminService } from '../services';
-import { User } from '../types';
+import { universityService, adminService } from '../services';
 import { format } from 'date-fns';
+import type { University } from '../services/universityService';
+import { User } from '../types';
 
 export const UniversityManagement: React.FC = () => {
-  const [universities, setUniversities] = useState<User[]>([]);
+  const [universities, setUniversities] = useState<University[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [editUniversity, setEditUniversity] = useState<University | null>(null);
+  const [updating, setUpdating] = useState(false);
 
   const loadUniversities = async () => {
     try {
       setLoading(true);
       setError(null);
-      // Fetch users with UNIVERSITY role
-      const response = await adminService.getUsers(1, 100, '', 'UNIVERSITY');
-      setUniversities(response.content);
+      // Fetch universities from university service
+      const universities = await universityService.getAllUniversities();
+      setUniversities(universities);
     } catch (err: any) {
       setError(err.message || 'Failed to load universities');
     } finally {
@@ -65,30 +72,70 @@ export const UniversityManagement: React.FC = () => {
     await loadUniversities();
   };
 
-  const handleVerifyUniversity = async (userId: string, currentlyVerified: boolean) => {
-    const action = currentlyVerified ? 'unverify' : 'verify';
-    if (!window.confirm(`Are you sure you want to ${action} this university?`)) return;
+  const handleEditUniversity = (university: University) => {
+    setEditUniversity(university);
+  };
+
+  const handleCloseEdit = () => {
+    setEditUniversity(null);
+  };
+
+  const handleUpdateUniversity = async () => {
+    if (!editUniversity) return;
 
     try {
-      if (currentlyVerified) {
-        await adminService.updateUser(userId, { isVerified: false });
-      } else {
-        await adminService.verifyUser(userId);
+      setUpdating(true);
+      // Update in university service - only send name and email
+      await universityService.updateUniversity(editUniversity.universityId, {
+        universityName: editUniversity.universityName,
+        email: editUniversity.email,
+      });
+      
+      // Also update in auth service - find user by UID and update name
+      try {
+        const usersResponse = await adminService.getUsers(1, 100, '', 'UNIVERSITY');
+        const user = usersResponse.content.find((u: User) => u.uid === editUniversity.universityId);
+        if (user) {
+          await adminService.updateUser(user.id, {
+            fullName: editUniversity.universityName,
+          });
+        }
+      } catch (err) {
+        console.error('Failed to sync update to auth service:', err);
       }
+      
       await loadUniversities();
-      setSuccessMessage(`University ${action}ed successfully`);
+      setEditUniversity(null);
+      setSuccessMessage('University updated successfully');
       setError(null);
     } catch (err: any) {
-      setError(err.message || `Failed to ${action} university`);
+      setError(err.message || 'Failed to update university');
       setSuccessMessage(null);
+    } finally {
+      setUpdating(false);
     }
   };
 
-  const handleDeleteUniversity = async (userId: string) => {
-    if (!window.confirm('Are you sure you want to delete this university? This action cannot be undone.')) return;
+  const handleDeleteUniversity = async (universityId: string) => {
+    if (!window.confirm('Are you sure you want to delete this university? This action cannot be undone.')) {
+      return;
+    }
 
     try {
-      await adminService.deleteUser(userId);
+      // Delete from university service
+      await universityService.deleteUniversity(universityId);
+      
+      // Also delete from auth service
+      try {
+        const usersResponse = await adminService.getUsers(1, 100, '', 'UNIVERSITY');
+        const user = usersResponse.content.find((u: User) => u.uid === universityId);
+        if (user) {
+          await adminService.deleteUser(user.id);
+        }
+      } catch (err) {
+        console.error('Failed to sync delete to auth service:', err);
+      }
+      
       await loadUniversities();
       setSuccessMessage('University deleted successfully');
       setError(null);
@@ -98,9 +145,10 @@ export const UniversityManagement: React.FC = () => {
     }
   };
 
+
   // Filter universities based on search term
   const filteredUniversities = universities.filter(uni =>
-    uni.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    uni.universityName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     uni.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -171,12 +219,12 @@ export const UniversityManagement: React.FC = () => {
           sx={{ fontWeight: 600 }}
         />
         <Chip
-          label={`Verified: ${universities.filter(u => u.isVerified).length}`}
+          label={`Verified: ${universities.filter(u => u.verified).length}`}
           color="success"
           sx={{ fontWeight: 600 }}
         />
         <Chip
-          label={`Unverified: ${universities.filter(u => !u.isVerified).length}`}
+          label={`Unverified: ${universities.filter(u => !u.verified).length}`}
           color="warning"
           sx={{ fontWeight: 600 }}
         />
@@ -195,7 +243,7 @@ export const UniversityManagement: React.FC = () => {
       ) : (
         <Grid container spacing={3}>
           {filteredUniversities.map((university) => (
-            <Grid item xs={12} sm={6} md={4} key={university.id}>
+            <Grid item xs={12} sm={6} md={4} key={university.universityId}>
               <Card
                 sx={{
                   height: '100%',
@@ -215,7 +263,7 @@ export const UniversityManagement: React.FC = () => {
                       sx={{
                         width: 56,
                         height: 56,
-                        bgcolor: university.isVerified ? 'primary.main' : 'grey.400',
+                        bgcolor: university.verified ? 'primary.main' : 'grey.400',
                         mr: 2,
                       }}
                     >
@@ -223,13 +271,13 @@ export const UniversityManagement: React.FC = () => {
                     </Avatar>
                     <Box sx={{ flexGrow: 1 }}>
                       <Typography variant="h6" component="div" sx={{ mb: 0.5, fontWeight: 600 }}>
-                        {university.fullName}
+                        {university.universityName}
                       </Typography>
                       <Chip
-                        label={university.isVerified ? 'Verified' : 'Unverified'}
-                        color={university.isVerified ? 'success' : 'default'}
+                        label={university.verified ? 'Verified' : 'Unverified'}
+                        color={university.verified ? 'success' : 'default'}
                         size="small"
-                        icon={university.isVerified ? <CheckCircle /> : <Cancel />}
+                        icon={university.verified ? <CheckCircle /> : <Cancel />}
                       />
                     </Box>
                   </Box>
@@ -261,55 +309,71 @@ export const UniversityManagement: React.FC = () => {
                   </Box>
 
                   {/* Additional Info */}
-                  {university.lastLoginAt && (
+                  {university.updatedAt && university.updatedAt !== university.createdAt && (
                     <Typography variant="caption" color="text.secondary" display="block">
-                      Last login: {format(new Date(university.lastLoginAt), 'MMM dd, yyyy HH:mm')}
+                      Last updated: {format(new Date(university.updatedAt), 'MMM dd, yyyy HH:mm')}
                     </Typography>
                   )}
                 </CardContent>
 
                 <Divider />
 
-                {/* Actions */}
-                <CardActions sx={{ justifyContent: 'space-between', px: 2, py: 1.5 }}>
-                  <Box>
-                    <Tooltip title={university.isVerified ? 'Mark as unverified' : 'Mark as verified'}>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleVerifyUniversity(university.id, university.isVerified)}
-                        color={university.isVerified ? 'warning' : 'success'}
-                      >
-                        {university.isVerified ? <Cancel /> : <CheckCircle />}
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Edit university">
-                      <IconButton
-                        size="small"
-                        color="primary"
-                        onClick={() => {
-                          // TODO: Implement edit functionality
-                          alert('Edit functionality coming soon!');
-                        }}
-                      >
-                        <Edit />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
+                {/* Action buttons */}
+                <Box sx={{ p: 2, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                  <Tooltip title="Edit university">
+                    <IconButton
+                      size="small"
+                      color="primary"
+                      onClick={() => handleEditUniversity(university)}
+                    >
+                      <Edit />
+                    </IconButton>
+                  </Tooltip>
                   <Tooltip title="Delete university">
                     <IconButton
                       size="small"
                       color="error"
-                      onClick={() => handleDeleteUniversity(university.id)}
+                      onClick={() => handleDeleteUniversity(university.universityId)}
                     >
                       <Delete />
                     </IconButton>
                   </Tooltip>
-                </CardActions>
+                </Box>
               </Card>
             </Grid>
           ))}
         </Grid>
       )}
+
+      {/* Edit University Dialog */}
+      <Dialog open={!!editUniversity} onClose={handleCloseEdit} maxWidth="sm" fullWidth>
+        <DialogTitle>Edit University</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <TextField
+              label="University Name"
+              fullWidth
+              value={editUniversity?.universityName || ''}
+              onChange={(e) => setEditUniversity(prev => prev ? { ...prev, universityName: e.target.value } : null)}
+            />
+            <TextField
+              label="Email"
+              fullWidth
+              type="email"
+              value={editUniversity?.email || ''}
+              onChange={(e) => setEditUniversity(prev => prev ? { ...prev, email: e.target.value } : null)}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseEdit} disabled={updating}>
+            Cancel
+          </Button>
+          <Button onClick={handleUpdateUniversity} variant="contained" disabled={updating}>
+            {updating ? 'Updating...' : 'Update'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* CSS for refresh animation */}
       <style>
