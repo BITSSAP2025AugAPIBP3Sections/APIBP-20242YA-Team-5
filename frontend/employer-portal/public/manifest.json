@@ -1,0 +1,8 @@
+{
+  "short_name": "Employer Portal",
+  "name": "Certificate Verification Portal",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}

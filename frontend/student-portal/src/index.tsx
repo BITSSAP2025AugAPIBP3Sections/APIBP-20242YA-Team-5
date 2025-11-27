@@ -42,7 +42,7 @@ const theme = createTheme({
   typography: {
     fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
     h1: {
-      fontFamily: '"Playfair Display", Georgia, serif',
+      fontFamily: '"Inter", sans-serif',
       fontWeight: 600,
       fontSize: '3.5rem',
       lineHeight: 1.2,
@@ -50,8 +50,8 @@ const theme = createTheme({
       color: '#1c1917', // Updated to new charcoal
     },
     h2: {
-      fontFamily: '"Playfair Display", Georgia, serif',
-      fontWeight: 500,
+      fontFamily: '"Inter", sans-serif',
+      fontWeight: 600,
       fontSize: '2.75rem',
       lineHeight: 1.3,
       letterSpacing: '-0.01em',
